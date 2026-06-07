@@ -1,0 +1,41 @@
+# ---- .NET / C# build output ----
+bin/
+obj/
+*.user
+*.suo
+*.userprefs
+[Dd]ebug/
+[Rr]elease/
+artifacts/
+
+# ---- Godot ----
+.godot/
+.import/
+*.translation
+# Exported asset packs are build artifacts (deployed to the game's mods folder)
+*.pck
+
+# ---- Mono / crash logs ----
+mono_crash.*
+logs/
+*.log
+
+# ---- IDEs / editors ----
+.vs/
+.vscode/
+.idea/
+*.DotSettings.user
+
+# ---- OS cruft ----
+.DS_Store
+Thumbs.db
+
+# ---- Claude Code (personal, per-machine) ----
+.claude/settings.local.json
+
+# ---- Cloned third-party reference mods (not ours to commit) ----
+refs/
+
+# ---- Local scratch ----
+opencode-shot/
+opencode-shot.zip
