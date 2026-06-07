@@ -33,22 +33,12 @@ public static class AddTradeOptionPatch
     }
 }
 
-[HarmonyPatch(typeof(Hook), nameof(Hook.ShouldDisableRemainingRestSiteOptions))]
-public static class PreventDisableAfterTradePatch
-{
-    [HarmonyPrefix]
-    public static bool Prefix(IRunState runState, Player player, ref bool __result)
-    {
-        var sync = TradeSynchronizer.Instance;
-        if (sync != null && sync.JustCompletedTrade.Contains(player.NetId))
-        {
-            sync.JustCompletedTrade.Remove(player.NetId);
-            __result = false;
-            return false;
-        }
-        return true;
-    }
-}
+// NOTE: Trade is a normal campfire action — it consumes the player's single rest-site
+// action like Rest/Smith. We deliberately do NOT patch
+// Hook.ShouldDisableRemainingRestSiteOptions: the game's native flow already clears the
+// remaining options after a successful OnSelect (return true) unless the player owns
+// Miniature Tent (whose relic override keeps options enabled). UnlimitedTrades works
+// because OnSelect returns false in that mode, so ChooseOption never consumes the action.
 
 [HarmonyPatch(typeof(RestSiteSynchronizer), nameof(RestSiteSynchronizer.BeginRestSite))]
 public static class InitTradeSyncPatch
@@ -86,23 +76,10 @@ public static class InitTradeSyncPatch
     }
 }
 
-/// <summary>
-/// Prevents the permanent "selected option" confirmation icon from appearing on
-/// rest site characters after a trade. Without this, the confirmation replaces the
-/// thought bubble system and blocks hover previews for all remaining options.
-/// </summary>
-[HarmonyPatch(typeof(NRestSiteCharacter), nameof(NRestSiteCharacter.ShowSelectedRestSiteOption))]
-public static class SkipTradeConfirmationPatch
-{
-    [HarmonyPrefix]
-    public static bool Prefix(RestSiteOption option)
-    {
-        // Skip showing the permanent confirmation icon for trade options.
-        // Trade doesn't consume the rest site action, so we want hover thought
-        // bubbles to keep working after the trade completes.
-        return option is not TradeRestSiteOption;
-    }
-}
+// NOTE: We no longer suppress the "selected option" confirmation icon for trades.
+// Trade now consumes the campfire action like Rest/Smith, so the game showing the
+// selected trade icon (only when the option succeeds, i.e. a completed trade in
+// non-unlimited mode) is the correct, consistent behavior.
 
 [HarmonyPatch(typeof(NRestSiteRoom), nameof(NRestSiteRoom._Ready))]
 public static class AddNotificationManagerPatch

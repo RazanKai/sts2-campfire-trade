@@ -44,7 +44,6 @@ public class TradeSynchronizer : IDisposable
 
     public Dictionary<ulong, ulong> PendingRequests { get; } = new();
     public HashSet<ulong> PlayersWhoTraded { get; } = new();
-    public HashSet<ulong> JustCompletedTrade { get; } = new();
 
     /// <summary>
     /// NetIds whose Trade OnSelect is currently in flight (between selection and
@@ -117,7 +116,6 @@ public class TradeSynchronizer : IDisposable
         _observedSession = null;
         PendingRequests.Clear();
         PlayersWhoTraded.Clear();
-        JustCompletedTrade.Clear();
         _selectionInFlight.Clear();
     }
 
@@ -368,6 +366,7 @@ public class TradeSynchronizer : IDisposable
             BlockObtainHookRelics = TradeConfig.BlockObtainHookRelics,
             BlockQuestCards = TradeConfig.BlockQuestCards,
             AllowStarterCards = TradeConfig.AllowStarterCards,
+            EnableGoldGifting = TradeConfig.EnableGoldGifting,
             MaxCardSlots = TradeConfig.MaxCardSlotsInt,
             MaxPotionSlots = TradeConfig.MaxPotionSlotsInt,
             MaxRelicSlots = TradeConfig.MaxRelicSlotsInt,
@@ -384,6 +383,7 @@ public class TradeSynchronizer : IDisposable
         TradeConfig.BlockObtainHookRelics = message.BlockObtainHookRelics;
         TradeConfig.BlockQuestCards = message.BlockQuestCards;
         TradeConfig.AllowStarterCards = message.AllowStarterCards;
+        TradeConfig.EnableGoldGifting = message.EnableGoldGifting;
         TradeConfig.MaxCardSlots = (CardSlots)message.MaxCardSlots;
         TradeConfig.MaxPotionSlots = (PotionSlots)message.MaxPotionSlots;
         TradeConfig.MaxRelicSlots = (RelicSlots)message.MaxRelicSlots;
@@ -505,18 +505,6 @@ public class TradeSynchronizer : IDisposable
         PlayersWhoTraded.Add(ActiveSession.LocalPlayerId);
         PlayersWhoTraded.Add(ActiveSession.PartnerPlayerId);
 
-        // Only mark JustCompletedTrade when OnSelect will return true (non-unlimited).
-        // JustCompletedTrade tells the ShouldDisableRemainingRestSiteOptions hook to
-        // return false so the trade doesn't consume the rest action. In unlimited mode,
-        // OnSelect returns false (option stays), so the hook never fires and the entry
-        // lingers — then when the player picks Rest, the hook incorrectly suppresses it,
-        // making Rest not consume the action either.
-        if (!TradeConfig.UnlimitedTrades)
-        {
-            JustCompletedTrade.Add(ActiveSession.LocalPlayerId);
-            JustCompletedTrade.Add(ActiveSession.PartnerPlayerId);
-        }
-
         Phase = TradePhase.Completed;
 
         var pendingRelicObtains = new List<(SerializableRelic serializable, Player target, int preExpand)>();
@@ -570,11 +558,6 @@ public class TradeSynchronizer : IDisposable
 
         PlayersWhoTraded.Add(_observedSession.LocalPlayerId);
         PlayersWhoTraded.Add(_observedSession.PartnerPlayerId);
-        if (!TradeConfig.UnlimitedTrades)
-        {
-            JustCompletedTrade.Add(_observedSession.LocalPlayerId);
-            JustCompletedTrade.Add(_observedSession.PartnerPlayerId);
-        }
 
         var pendingRelicObtains = new List<(SerializableRelic serializable, Player target, int preExpand)>();
         try

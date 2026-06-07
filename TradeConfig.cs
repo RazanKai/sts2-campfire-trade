@@ -25,6 +25,13 @@ public class TradeConfig : SimpleModConfig
     /// </summary>
     public static bool AllowStarterCards { get; set; } = false;
 
+    /// <summary>
+    /// When true, "Give Gold" buttons appear under other players at merchant shops,
+    /// letting players gift gold to each other. On by default. Host-authoritative:
+    /// synced to clients via TradeConfigMessage.
+    /// </summary>
+    public static bool EnableGoldGifting { get; set; } = true;
+
     public TradeConfig() { }
 
     public override void SetupConfigUI(Control optionContainer)
