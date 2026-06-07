@@ -99,6 +99,20 @@
     </Target>
 
     <Target Name="GodotPublish" AfterTargets="Publish" Condition="'$(GodotPath)' != '' and Exists('$(GodotPath)') and '$(IsInnerGodotExport)' != 'true'">
+        <!--
+          IMPORTANT: run a Godot asset-import pass BEFORE exporting the pack.
+          Godot resolves res:// textures at runtime by computing md5(res-path) and
+          loading ".godot/imported/<name>.png-<md5>.ctex". Exporting (or packing via
+          an external tool) without first importing produces a pack whose compiled
+          texture is named with a non-md5 hash, so the game can't find it and falls
+          back to a default icon (the "dig" sprite). The import pass populates
+          .godot/imported with correctly md5-named .ctex files so the export bakes a
+          valid path remap and the trade icon resolves.
+        -->
+        <Message Text="Importing Godot assets (generates md5-named .ctex so the trade icon resolves)" Importance="high"/>
+        <Exec Command="&quot;$(GodotPath)&quot; --headless --import &quot;$(MSBuildProjectDirectory)/project.godot&quot;"
+              EnvironmentVariables="IsInnerGodotExport=true;MSBUILDDISABLENODEREUSE=1"
+              ContinueOnError="WarnAndContinue"/>
         <Message Text="Exporting Godot .pck to mods folder" Importance="high"/>
         <Exec Command="&quot;$(GodotPath)&quot; --headless --export-pack &quot;BasicExport&quot; &quot;$(Sts2Path)/mods/$(MSBuildProjectName)/$(MSBuildProjectName).pck&quot;"
               EnvironmentVariables="IsInnerGodotExport=true;MSBUILDDISABLENODEREUSE=1"
