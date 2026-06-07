@@ -4,17 +4,17 @@
 **Target:** Slay the Spire 2 (Early Access, **v0.107.0** — commit `23d60b98`, 2026-06-04)
 **Stack:** C# / **.NET 9** (Godot.NET.Sdk/4.5.1 project), game-bundled Harmony 2.4.2 (`0Harmony.dll`) + MonoMod, assembly publicizer, **BaseLib** (hard dependency), STS2 modding API; co-op networking via `INetMessage`/`NetService` (Steamworks transport).
 
-> **Scope note (this revision):** the mod is **multiplayer-only**. The earlier singleplayer "Exchange with the pool" feature has been **removed**. What remains is **player-to-player trading** at rest sites: **cards** trade under a **rarity point-balance** rule; **potions and relics** trade freely under **slot caps** (no points). See `REVIEW.md` for the API audit and `PRIOR-ART-COMPARISON.md` for the two shipping mods this design now borrows from (`chaendizzle/STS2Trade`, `sirposh777/campfire-trading-update`).
+> **Scope note:** the mod is **multiplayer-only**. It provides **player-to-player trading** at rest sites — **cards** trade under a **rarity point-balance** rule; **potions and relics** trade freely under **slot caps** (no points) — plus an optional **Give Gold** button at merchant shops. It borrows heavily from two shipping mods (`chaendizzle/STS2Trade`, `sirposh777/campfire-trading-update`).
 >
-> **Key de-risking:** the one make-or-break unknown in prior revisions — whether a mod-defined `INetMessage` subtype round-trips across co-op clients — is **resolved YES** by the shipping `chaendizzle/STS2Trade` mod. No networking spike is required.
+> This document is the living spec and reflects the **current** behavior. The make-or-break unknown from early planning — whether a mod-defined `INetMessage` subtype round-trips across co-op clients — is **resolved YES** by the shipping `chaendizzle/STS2Trade` mod.
 
 ---
 
 ## Overview
 
-Campfire Trade adds one new option to every co-op rest site: **Trade with Player**. Any player at the rest site can propose a direct trade with another. A single trade can include cards, potions, and relics. The trade requires mutual confirmation and is applied **deterministically and identically on every client** (STS2 co-op has no separate server).
+Campfire Trade adds one new option to every co-op rest site: **Trade with Player**. Any player at the rest site can propose a direct trade with another. A single trade can include cards, potions, and relics. The trade requires mutual confirmation and is applied **deterministically and identically on every client** (STS2 co-op has no separate server). It also adds an optional **Give Gold** button at merchant shops so players can hand each other gold.
 
-The constraint that makes it fair: **the card portion of both sides must have equal total trade value** (a rarity point system). Potions and relics are not point-valued; they are limited only by per-side slot caps and a few non-tradeable rules. Trading does **not** consume the campfire action — Rest and Forge remain available — so co-op players never have to choose between cooperating and healing.
+The constraint that makes it fair: **the card portion of both sides must have equal total trade value** (a rarity point system). Potions and relics are not point-valued; they are limited only by per-side slot caps and a few non-tradeable rules. A completed trade **consumes the campfire action** like Rest or Forge (one action per rest site), with the game's native **Miniature Tent** behavior — which lets its owner take every option — respected automatically.
 
 This fills a gap nothing else in the run touches: a social negotiation layer between co-op players, plus a way to move a card to the teammate whose deck actually wants it.
 
@@ -25,7 +25,8 @@ This fills a gap nothing else in the run touches: a social negotiation layer bet
 | Item type | Tradeable? | Balancing rule |
 |---|---|---|
 | **Cards** — Common / Uncommon / Rare | Yes | **Point-balanced** (see below) |
-| Cards — Basic (starters), Ancient, Event, Token, Status, Quest, Curse | **No** | — |
+| Cards — Basic (starters) | Optional | Off by default; `AllowStarterCards` enables them (valued 1, like Common) |
+| Cards — Ancient, Event, Token, Status, Quest, Curse | **No** | — |
 | **Potions** | Yes | Slot cap only |
 | **Relics** | Yes | Slot cap only; quest relics & on-obtain-hook relics blockable by config |
 
@@ -56,11 +57,17 @@ A trade with **no cards on either side** (potions/relics only) is allowed as lon
 | `MaxCardSlots` | 1–5 | 3 | Max cards per side |
 | `MaxPotionSlots` | 1–3 | 3 | Max potions per side |
 | `MaxRelicSlots` | 1–3 | 1 | Max relics per side |
-| `UnlimitedTrades` | on/off | off | Allow >1 completed trade per player per rest site |
+| `UnlimitedTrades` | on/off | off | Allow >1 completed trade per player per rest site (trade no longer consumes the action) |
+| `AllowStarterCards` | on/off | off | Allow Basic starter cards to trade (valued 1 each) |
+| `EnableGoldGifting` | on/off | on | Show the Give Gold button at merchant shops |
 | `BlockObtainHookRelics` | on/off | on | Disallow trading relics with meaningful `AfterObtained` hooks |
 | `BlockQuestCards` | on/off | on | Disallow trading quest cards |
 
-Config is a `BaseLib.Config.SimpleModConfig` (free in-game settings UI + persistence). The **host broadcasts its config** to all clients at rest-site start so everyone validates against identical rules — essential for determinism.
+Config is a `BaseLib.Config.SimpleModConfig` (free in-game settings UI + persistence). The **host broadcasts its config** to all clients (via `TradeConfigMessage`) so everyone validates against identical rules — essential for determinism.
+
+### Give Gold at shops
+
+Separate from trading: when `EnableGoldGifting` is on (default), a **Give Gold** button is injected under each non-local player at real and event merchants. Clicking sends 50 gold; holding triggers an accelerating repeat for larger transfers. The transfer deducts locally first (to prevent overspend on rapid holds) and broadcasts a `GiveGoldMessage` so every client applies the same change. This is a UI affordance, not part of the trade balance system.
 
 ---
 
@@ -92,8 +99,8 @@ This adopts the proven flow from `chaendizzle/STS2Trade` rather than an asymmetr
   Card value: 2             Card value: 2   ✓ balanced
   [ Confirm ]                [ Confirm ]
   • Each player adds items from their own deck/belt/relics, live.
-  • Non-tradeable items are dimmed/unselectable (curses, starters,
-    quest cards, blocked relics).
+  • Non-tradeable items are dimmed/unselectable (curses, quest cards,
+    blocked relics, and starters unless AllowStarterCards is on).
   • Live per-side card-value counter. Confirm DISABLED until:
       – card subtotals equal and > 0 (or no cards on either side), AND
       – each side within MaxCard/Potion/Relic slot caps, AND
@@ -106,8 +113,9 @@ This adopts the proven flow from `chaendizzle/STS2Trade` rather than an asymmetr
 
 [ TRADE APPLIED ]
   Swap runs identically on every client (deterministic).
-  Trade option consumed for both players (unless UnlimitedTrades).
-  Rest and Forge remain available — trade does NOT cost the action.
+  Trade consumes the campfire action for both players (unless
+  UnlimitedTrades). Remaining options (Rest/Forge) are cleared,
+  unless the player owns Miniature Tent (game's native behavior).
 ```
 
 ### Cancellation & timeouts
@@ -167,7 +175,7 @@ Runs identically on each client when both players have confirmed. Three phases (
 - **Curses are never tradeable** (by `CardRarity.Curse` or `CardType.Curse`).
 - **Only the card subtotal is point-balanced**; potions/relics are slot-capped, not valued.
 - **Card subtotals must be equal and > 0 when any cards are present**; an all-potion/relic trade is allowed within caps.
-- **Trading does not consume the campfire action** (Rest/Forge remain).
+- **A completed trade consumes the campfire action** like Rest/Forge (unless `UnlimitedTrades`), deferring to the game's native `ShouldDisableRemainingRestSiteOptions` so **Miniature Tent** is respected.
 - **Cards keep their upgrade/enchantment state across a trade** (`ClonePreservingMutability`).
 - **Cancelling or declining does not consume a trade slot.**
 - **Host config is authoritative**; clients validate against the broadcast rules.
@@ -182,25 +190,23 @@ CampfireTrade/
 ├── CampfireTrade.json                  # manifest (<ModId>.json; has_pck/has_dll/dependencies)
 ├── CampfireTrade.csproj
 ├── project.godot · export_presets.cfg  # Godot.NET.Sdk build + MegaDot .pck export
-├── src/
-│   ├── MainFile.cs                     # [ModInitializer]; register config; Harmony.PatchAll()
-│   ├── TradeConfig.cs                  # SimpleModConfig (slot caps + block flags)
-│   ├── TradeRestSiteOption.cs          # RestSiteOption subclass (targeting, wait, open screen)
-│   ├── TradeSynchronizer.cs            # net handlers, match detection, execute (active + observed)
-│   ├── TradeState.cs                   # TradePhase, TradeOffer, TradeSession (+ confirm validation)
-│   ├── TradeValidator.cs               # CARD point balance (pure, unit-tested)
-│   ├── Patches/
-│   │   ├── AddTradeOptionPatch.cs      # postfix RestSiteOption.Generate
-│   │   ├── PreventDisableAfterTradePatch.cs   # prefix Hook.ShouldDisableRemainingRestSiteOptions
-│   │   ├── InitTradeSyncPatch.cs       # prefix RestSiteSynchronizer.BeginRestSite
-│   │   ├── SkipTradeConfirmationPatch.cs
-│   │   └── AddNotificationManagerPatch.cs
-│   ├── Messages/                       # 5 INetMessage structs (index-based)
-│   └── UI/                             # NTradeScreen, NTradeSlot, NTradeItemPicker, NTradeTooltip, notifications
-└── CampfireTrade/                      # packed assets: localization/eng/rest_site_ui.json, option_trade.png
+├── MainFile.cs                        # [ModInitializer]; register config; Harmony.PatchAll()
+├── TradeConfig.cs                     # SimpleModConfig (slot caps + toggles)
+├── TradeRestSiteOption.cs             # RestSiteOption subclass (targeting, wait, open screen)
+├── TradeSynchronizer.cs               # net handlers, match detection, execute (active + observed)
+├── TradeState.cs                      # TradePhase, TradeOffer, TradeSession (+ confirm validation)
+├── TradeValidator.cs                  # CARD point balance (pure)
+├── GoldGiftSynchronizer.cs            # co-op gold-transfer logic for the shop feature
+├── Patches/
+│   ├── RestSitePatches.cs             # postfix Generate; sync lifecycle; notification manager
+│   ├── ShopPatches.cs                 # Give Gold buttons at merchant / fake-merchant rooms
+│   └── SavePatches.cs                 # test helper
+├── Messages/                          # 6 INetMessage structs (index-based; incl. GiveGoldMessage)
+└── UI/                                # NTradeScreen, NTradeSlot, NTradeItemPicker, NTradeTooltip, NGiveGoldButton, notifications
+   CampfireTrade/                      # packed assets: localization/eng/rest_site_ui.json, option_trade.png
 ```
 
-This mirrors `chaendizzle/STS2Trade` closely on purpose — that layout is proven. The only net-new logic versus the shipping mod is `TradeValidator` (the card point system) and the Confirm gate wiring.
+This mirrors `chaendizzle/STS2Trade` closely on purpose — that layout is proven. The net-new logic versus the shipping mod is `TradeValidator` (the card point system) + Confirm gate, plus making trade consume the campfire action and the starter/gold config toggles. (Earlier revisions added `PreventDisableAfterTradePatch`/`SkipTradeConfirmationPatch` to make trade *not* consume the action; both were since removed in favor of the game's native option-clearing.)
 
 ---
 
@@ -210,7 +216,7 @@ This mirrors `chaendizzle/STS2Trade` closely on purpose — that layout is prove
 
 **Why a Confirm gate, not an asymmetric counter flow:** with potions/relics free and only card subtotals constrained, a shared live-build screen plus a balance check is simpler to build and to understand than a turn-based offer/counter, and it reuses the proven shipping-mod flow almost unchanged.
 
-**Why trading doesn't cost the action:** the cost of trading is the cards/items themselves. Stacking the campfire action on top would punish co-op, which is the whole point of the feature.
+**Why trading costs the action:** trade is treated as a first-class campfire choice alongside Rest and Forge — one action per rest site. (An earlier revision made it free; that allowed an extra action per campfire, so it was changed to consume like any other option. `UnlimitedTrades` restores the free-trade behavior for groups that prefer it, and Miniature Tent owners still get every option.)
 
 **Griefing surface:** curses non-tradeable; the shared preview removes surprise; quest/on-obtain relics blockable; the per-player option grays out after a completed trade. Card balance prevents lopsided card swaps.
 
@@ -221,7 +227,8 @@ This mirrors `chaendizzle/STS2Trade` closely on purpose — that layout is prove
 - **API churn (Early Access).** Symbols below were taken from a *working* mod built against a nearby build; re-confirm `RestSiteOption.Generate`'s signature, `ClonePreservingMutability`, `InvokeCardAddFinished`, and the manifest schema against your decompiled `sts2.dll` (v0.107.0) via the `sts2-modding` MCP before relying on them. They are concrete symbols to verify, not guesses.
 - **3+ player desync.** Handled by the observer-session pattern + canonical ordering + choice-id sync — do not skip these; they are the parts most likely to desync if omitted.
 - **Deck-counter not updating after add.** Call `InvokeCardAddFinished()`; the counter won't move otherwise.
-- **`UnlimitedTrades` + non-consume interaction.** Only mark a player in `JustCompletedTrade` when the trade will actually consume the option (i.e. not unlimited); otherwise the non-consume prefix lingers and wrongly suppresses the next Rest. (This was a real bug found in the shipping mod.)
+- **Co-op choice-ID desync on duplicate selection.** An observer machine runs a player's `OnSelect` once per received selection message; a re-broadcast made it reserve an extra `PlayerChoiceSynchronizer` id, desyncing the per-player choice counters (a divergence on leaving the rest site). Guarded by an in-flight selection set (`TryBeginSelection`/`EndSelection`) that rejects the duplicate before any id is reserved.
+- **Trade icon not resolving.** Godot loads a texture by `md5(res://path)`; packing without a Godot `--import` pass names the `.ctex` with a non-md5 hash, so the icon falls back to a default. The build runs `--import` before `--export-pack`.
 
 ---
 
@@ -231,4 +238,4 @@ A multiplayer-only rest-site trade. Cards trade under a rarity point balance (Co
 
 ---
 
-*References: `CLAUDE.md` (build guide) · `REVIEW.md` (API audit) · `PRIOR-ART-COMPARISON.md` · [chaendizzle/STS2Trade](https://github.com/chaendizzle/STS2Trade) · [sirposh777/campfire-trading-update](https://github.com/sirposh777/campfire-trading-update) · [STS2 modding MCP](https://github.com/elliotttate/sts2-modding-mcp).*
+*References: `../README.md` · `../CLAUDE.md` (build guide) · [chaendizzle/STS2Trade](https://github.com/chaendizzle/STS2Trade) · [sirposh777/campfire-trading-update](https://github.com/sirposh777/campfire-trading-update) · [Alchyr/BaseLib-StS2](https://github.com/Alchyr/BaseLib-StS2) · [STS2 modding MCP](https://github.com/elliotttate/sts2-modding-mcp).*

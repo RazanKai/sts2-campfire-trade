@@ -74,9 +74,7 @@ docs/                    Design doc, API audit, prior-art comparison
 
 ## Documentation
 
-- [`docs/campfire-trade-mod-design.md`](docs/campfire-trade-mod-design.md) — full design
-- [`docs/REVIEW.md`](docs/REVIEW.md) — API audit against v0.107.0
-- [`docs/PRIOR-ART-COMPARISON.md`](docs/PRIOR-ART-COMPARISON.md) — comparison with the two shipping trade mods this build borrows from
+- [`docs/campfire-trade-mod-design.md`](docs/campfire-trade-mod-design.md) — full design spec (kept current)
 - [`CLAUDE.md`](CLAUDE.md) — build guide / implementation notes
 
 ## Credits

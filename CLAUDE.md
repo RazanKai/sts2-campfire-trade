@@ -2,7 +2,7 @@
 
 You are building **Campfire Trade**, a C# mod for Slay the Spire 2 (Early Access, **v0.107.0** — commit `23d60b98`, 2026-06-04).
 
-Read `campfire-trade-mod-design.md` (the design), `REVIEW.md` (the API audit), and `PRIOR-ART-COMPARISON.md` (the two shipping mods this build borrows from) before writing code.
+Read `docs/campfire-trade-mod-design.md` (the living design spec) before writing code. The primary code reference is the shipping `chaendizzle/STS2Trade` mod (cloned under `refs/`).
 
 > **Scope:** multiplayer-only **player-to-player trading** at rest sites. **Cards** trade under a rarity point-balance rule (Common 1 / Uncommon 2 / Rare 4, both sides' card subtotals equal). **Potions and relics** trade freely under slot caps (no points). There is **no singleplayer feature** — the old "Exchange with the pool" is removed.
 >
@@ -311,7 +311,7 @@ Dev env: **CachyOS** (Arch-based; install with `sudo pacman -S <pkg>`).
 
 ## Key references
 
-- Design: `campfire-trade-mod-design.md` · API audit: `REVIEW.md` · Prior-art comparison: `PRIOR-ART-COMPARISON.md`
+- Design: `docs/campfire-trade-mod-design.md` (living spec)
 - **Primary code reference (proven patterns):** [chaendizzle/STS2Trade](https://github.com/chaendizzle/STS2Trade) (cloned under `refs/`) · newer-build port [sirposh777/campfire-trading-update](https://github.com/sirposh777/campfire-trading-update)
 - BaseLib: [Alchyr's BaseLib-StS2](https://github.com/Alchyr/BaseLib-StS2) · mod template: [ModTemplate-StS2](https://github.com/Alchyr/ModTemplate-StS2)
 - **STS2 modding MCP** (decompiles + indexes the real API — verify every symbol here): https://github.com/elliotttate/sts2-modding-mcp
