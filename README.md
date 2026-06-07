@@ -73,4 +73,6 @@ docs/                    Design doc, API audit, prior-art comparison
 
 ## Credits
 
-Adapts proven patterns from [chaendizzle/STS2Trade](https://github.com/chaendizzle/STS2Trade) and [sirposh777/campfire-trading-update](https://github.com/sirposh777/campfire-trading-update). Config and infrastructure via [Alchyr's BaseLib](https://github.com/Alchyr/BaseLib-StS2).
+This mod is a **fork of [chaendizzle/STS2Trade](https://github.com/chaendizzle/STS2Trade)** ("Campfire Trading"). The networking, synchronizer, rest-site option, and trade UI are taken largely verbatim from that mod. The changes on top are: a new rarity **point-balance system for cards** (`TradeValidator.cs`), the removal of the gold-gift and shop features, and assorted edits to the trade state and screen. The newer-build port [sirposh777/campfire-trading-update](https://github.com/sirposh777/campfire-trading-update) was also referenced.
+
+Config and infrastructure via [Alchyr's BaseLib](https://github.com/Alchyr/BaseLib-StS2).
