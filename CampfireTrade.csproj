@@ -110,7 +110,7 @@
           valid path remap and the trade icon resolves.
         -->
         <Message Text="Importing Godot assets (generates md5-named .ctex so the trade icon resolves)" Importance="high"/>
-        <Exec Command="&quot;$(GodotPath)&quot; --headless --import &quot;$(MSBuildProjectDirectory)/project.godot&quot;"
+        <Exec Command="&quot;$(GodotPath)&quot; --headless --path &quot;$(MSBuildProjectDirectory)&quot; --import"
               EnvironmentVariables="IsInnerGodotExport=true;MSBUILDDISABLENODEREUSE=1"
               ContinueOnError="WarnAndContinue"/>
         <Message Text="Exporting Godot .pck to mods folder" Importance="high"/>
