@@ -1,0 +1,6 @@
+{
+  "OPTION_TRADE.name": "Trade with Player",
+  "OPTION_TRADE.description": "Trade cards, potions, and relics with another player. Cards must be rarity-point balanced.",
+  "OPTION_TRADE.descriptionDisabled": "Cannot trade at this campfire.",
+  "OPTION_TRADE.selectCard": "Choose a card to [gold]Trade[/gold]."
+}

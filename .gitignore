@@ -36,6 +36,9 @@ Thumbs.db
 # ---- Cloned third-party reference mods (not ours to commit) ----
 refs/
 
+# ---- Local NuGet restore cache (globalPackagesFolder in nuget.config) ----
+packages/
+
 # ---- Local scratch ----
 opencode-shot/
 opencode-shot.zip
