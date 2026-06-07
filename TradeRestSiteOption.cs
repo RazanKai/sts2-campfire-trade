@@ -65,31 +65,55 @@ public sealed class TradeRestSiteOption : RestSiteOption
 
     public override async Task<bool> OnSelect()
     {
-        // Reserve a choice ID following the MendRestSiteOption pattern.
-        // This ensures HOST and CLIENT track the same number of choices per player,
-        // preventing Choice ID desync in the checksum.
-        uint choiceId = RunManager.Instance.PlayerChoiceSynchronizer.ReserveChoiceId(Owner);
-        MainFile.Logger.Info($"OnSelect: Reserved choiceId={choiceId} for player {Owner.NetId}");
-
         var sync = TradeSynchronizer.Instance;
-        if (sync == null)
+
+        // Guard against a DUPLICATE in-flight selection of the Trade option for the
+        // same player (e.g. a second click on Trade while the first trade is still
+        // resolving, or a re-broadcast OptionIndexChosen). The owner machine runs
+        // OnSelect once (UI-driven); an observer machine runs it once PER received
+        // selection message. An extra invocation reserves an extra choice id on the
+        // observer only, desyncing the per-player PlayerChoiceSynchronizer counters
+        // and causing a multiplayer state divergence when leaving the rest site.
+        // Reject the duplicate BEFORE reserving a choice id so counters stay symmetric.
+        if (sync != null && !sync.TryBeginSelection(Owner.NetId))
         {
-            MainFile.Logger.Error("TradeSynchronizer not available");
-            // Still sync the choice so counters stay consistent
-            if (LocalContext.IsMe(Owner))
-                RunManager.Instance.PlayerChoiceSynchronizer.SyncLocalChoice(Owner, choiceId, PlayerChoiceResult.FromPlayerId(null));
-            else
-                await RunManager.Instance.PlayerChoiceSynchronizer.WaitForRemoteChoice(Owner, choiceId);
+            MainFile.Logger.Info($"OnSelect: duplicate in-flight selection for player {Owner.NetId} ignored (no choice id reserved)");
             return false;
         }
 
-        if (LocalContext.IsMe(Owner))
+        try
         {
-            return await OnSelectLocal(sync, choiceId);
+            // Reserve a choice ID following the MendRestSiteOption pattern.
+            // This ensures HOST and CLIENT track the same number of choices per player,
+            // preventing Choice ID desync in the checksum.
+            uint choiceId = RunManager.Instance.PlayerChoiceSynchronizer.ReserveChoiceId(Owner);
+            MainFile.Logger.Info($"OnSelect: Reserved choiceId={choiceId} for player {Owner.NetId}");
+
+            if (sync == null)
+            {
+                MainFile.Logger.Error("TradeSynchronizer not available");
+                // Still sync the choice so counters stay consistent
+                if (LocalContext.IsMe(Owner))
+                    RunManager.Instance.PlayerChoiceSynchronizer.SyncLocalChoice(Owner, choiceId, PlayerChoiceResult.FromPlayerId(null));
+                else
+                    await RunManager.Instance.PlayerChoiceSynchronizer.WaitForRemoteChoice(Owner, choiceId);
+                return false;
+            }
+
+            if (LocalContext.IsMe(Owner))
+            {
+                return await OnSelectLocal(sync, choiceId);
+            }
+            else
+            {
+                return await OnSelectRemote(sync, choiceId);
+            }
         }
-        else
+        finally
         {
-            return await OnSelectRemote(sync, choiceId);
+            // Clear the in-flight marker once the whole trade flow has resolved, so a
+            // later genuine re-selection (unlimited mode) can proceed symmetrically.
+            sync?.EndSelection(Owner.NetId);
         }
     }
 

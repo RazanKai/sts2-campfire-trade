@@ -18,6 +18,13 @@ public class TradeConfig : SimpleModConfig
     public static bool BlockObtainHookRelics { get; set; } = true;
     public static bool BlockQuestCards { get; set; } = true;
 
+    /// <summary>
+    /// When true, Basic-rarity cards (starter Strikes/Defends) become tradeable and
+    /// are valued at 1 point each (same as Common). Off by default — starters are
+    /// normally excluded. Host-authoritative: synced to clients via TradeConfigMessage.
+    /// </summary>
+    public static bool AllowStarterCards { get; set; } = false;
+
     public TradeConfig() { }
 
     public override void SetupConfigUI(Control optionContainer)

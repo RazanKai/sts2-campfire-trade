@@ -20,19 +20,25 @@ public static class TradeValidator
 {
     private static readonly Dictionary<CardRarity, int> Points = new()
     {
+        // Basic (starters) are valued 1 — only ever counted when AllowStarterCards
+        // is on (IsCardTradeable gates whether they can be offered at all).
+        { CardRarity.Basic, 1 },
         { CardRarity.Common, 1 },
         { CardRarity.Uncommon, 2 },
         { CardRarity.Rare, 4 },
     };
 
     /// <summary>
-    /// A card may be offered only if it has a point value (Common/Uncommon/Rare),
-    /// is not a Curse/Status/Quest by type, and is removable from the deck.
-    /// Curses, starters, tokens, event, and ancient cards are never tradeable.
+    /// A card may be offered only if it has a point value (Common/Uncommon/Rare, plus
+    /// Basic when AllowStarterCards is on), is not a Curse/Status/Quest by type, and is
+    /// removable from the deck. Curses, tokens, event, and ancient cards are never
+    /// tradeable; starters (Basic) are tradeable only when the config toggle is enabled.
     /// </summary>
     public static bool IsCardTradeable(CardModel c)
     {
         if (!Points.ContainsKey(c.Rarity))
+            return false;
+        if (c.Rarity == CardRarity.Basic && !TradeConfig.AllowStarterCards)
             return false;
         if (c.Type is CardType.Curse or CardType.Status or CardType.Quest)
             return false;

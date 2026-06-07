@@ -46,6 +46,23 @@ public class TradeSynchronizer : IDisposable
     public HashSet<ulong> PlayersWhoTraded { get; } = new();
     public HashSet<ulong> JustCompletedTrade { get; } = new();
 
+    /// <summary>
+    /// NetIds whose Trade OnSelect is currently in flight (between selection and
+    /// trade resolution). Used to reject a DUPLICATE option selection for the same
+    /// player — e.g. an impatient second click on Trade, or a re-broadcast
+    /// OptionIndexChosen — which would otherwise invoke OnSelect (and reserve an
+    /// extra PlayerChoiceSynchronizer choice id) one more time on an observer
+    /// machine than on the owner's, desyncing the per-player choice-id counters and
+    /// triggering a multiplayer state divergence when leaving the rest site.
+    /// </summary>
+    private readonly HashSet<ulong> _selectionInFlight = new();
+
+    /// <summary>Marks a player's Trade selection as in flight. Returns false if one already is (duplicate).</summary>
+    public bool TryBeginSelection(ulong netId) => _selectionInFlight.Add(netId);
+
+    /// <summary>Clears a player's in-flight Trade selection marker.</summary>
+    public void EndSelection(ulong netId) => _selectionInFlight.Remove(netId);
+
     public event Action? TradeStateChanged;
     public void NotifyStateChanged() => TradeStateChanged?.Invoke();
     public event Action<ulong, ulong>? TradeRequestReceived;
@@ -101,6 +118,7 @@ public class TradeSynchronizer : IDisposable
         PendingRequests.Clear();
         PlayersWhoTraded.Clear();
         JustCompletedTrade.Clear();
+        _selectionInFlight.Clear();
     }
 
     public bool CanTrade(ulong playerId)
@@ -349,6 +367,7 @@ public class TradeSynchronizer : IDisposable
             UnlimitedTrades = TradeConfig.UnlimitedTrades,
             BlockObtainHookRelics = TradeConfig.BlockObtainHookRelics,
             BlockQuestCards = TradeConfig.BlockQuestCards,
+            AllowStarterCards = TradeConfig.AllowStarterCards,
             MaxCardSlots = TradeConfig.MaxCardSlotsInt,
             MaxPotionSlots = TradeConfig.MaxPotionSlotsInt,
             MaxRelicSlots = TradeConfig.MaxRelicSlotsInt,
@@ -364,6 +383,7 @@ public class TradeSynchronizer : IDisposable
         TradeConfig.UnlimitedTrades = message.UnlimitedTrades;
         TradeConfig.BlockObtainHookRelics = message.BlockObtainHookRelics;
         TradeConfig.BlockQuestCards = message.BlockQuestCards;
+        TradeConfig.AllowStarterCards = message.AllowStarterCards;
         TradeConfig.MaxCardSlots = (CardSlots)message.MaxCardSlots;
         TradeConfig.MaxPotionSlots = (PotionSlots)message.MaxPotionSlots;
         TradeConfig.MaxRelicSlots = (RelicSlots)message.MaxRelicSlots;
