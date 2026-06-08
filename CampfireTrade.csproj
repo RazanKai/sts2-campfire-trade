@@ -30,8 +30,6 @@
 
     <!-- Linux -->
     <PropertyGroup Condition="'$(IsLinux)' == 'true'">
-        <!-- This machine: game lives on a secondary Steam library. Detect it, then fall back to the default. -->
-        <SteamLibraryPath Condition="'$(SteamLibraryPath)' == '' and Exists('/run/media/nazar/Gaaaymes/SteamLibrary/steamapps/common/Slay the Spire 2')">/run/media/nazar/Gaaaymes/SteamLibrary/steamapps</SteamLibraryPath>
         <SteamLibraryPath Condition="'$(SteamLibraryPath)' == ''">$(HOME)/.local/share/Steam/steamapps</SteamLibraryPath>
         <Sts2Path Condition="'$(Sts2Path)' == ''">$(SteamLibraryPath)/common/Slay the Spire 2</Sts2Path>
         <Sts2DataDir Condition="'$(Sts2DataDir)' == ''">$(Sts2Path)/data_sts2_linuxbsd_x86_64</Sts2DataDir>
