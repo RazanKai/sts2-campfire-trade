@@ -2,7 +2,7 @@
 
 A **Slay the Spire 2** mod that adds **player-to-player trading** at rest sites in co-op. Move a card to the teammate whose deck actually wants it, swap spare potions, or hand off a relic. It also adds an optional **Give Gold** button at merchant shops so teammates can share gold.
 
-> **Multiplayer only.** Targets STS2 Early Access **v0.107.0**. Built in C# / .NET 9 on the Godot SDK, using Harmony patches and the game's `INetMessage` co-op networking. Requires **[BaseLib](https://github.com/Alchyr/BaseLib-StS2)**.
+>  Targets STS2 Early Access **v0.107.0**. Built in C# / .NET 9 on the Godot SDK, using Harmony patches and the game's `INetMessage` co-op networking. Requires **[BaseLib](https://github.com/Alchyr/BaseLib-StS2)**.
 
 ## How it works
 
