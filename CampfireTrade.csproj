@@ -7,6 +7,11 @@
         <DefaultItemExcludes>packages/**</DefaultItemExcludes>
     </PropertyGroup>
 
+    <!-- Optional per-machine overrides (gitignored). Create Local.props to set
+         e.g. <Sts2Path> when the game isn't in a standard Steam location. Imported
+         before OS detection so it takes precedence; absent on CI/other machines. -->
+    <Import Project="$(MSBuildProjectDirectory)/Local.props" Condition="Exists('$(MSBuildProjectDirectory)/Local.props')" />
+
     <!-- OS Detection -->
     <PropertyGroup>
         <IsWindows>false</IsWindows>
