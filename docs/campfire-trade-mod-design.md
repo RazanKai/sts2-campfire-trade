@@ -68,7 +68,9 @@ Config is a `BaseLib.Config.SimpleModConfig` (free in-game settings UI + persist
 
 ### Give Gold at shops
 
-Separate from trading: when `EnableGoldGifting` is on (default), a **Give Gold** button is injected under each non-local player at real and event merchants. Clicking sends 50 gold; holding triggers an accelerating repeat for larger transfers. The transfer deducts locally first (to prevent overspend on rapid holds) and broadcasts a `GiveGoldMessage` so every client applies the same change. This is a UI affordance, not part of the trade balance system.
+Separate from trading: when `EnableGoldGifting` is on (default), a **Give Gold** button is injected under each non-local player at real and event merchants. Clicking sends 50 gold; holding triggers an accelerating repeat for larger transfers. The transfer deducts locally first (to prevent overspend on rapid holds) and broadcasts a `GiveGoldMessage` so every client applies the same change.
+
+The recipient is credited via `PlayerCmd.GainGold` on **every** machine (sender included), so gain-gold relic effects — notably **Dragon Fruit** (`AfterGoldGained → GainMaxHp`) — fire identically on all clients. (Crediting the recipient with a direct `Gold +=` on only the sender's machine, as the upstream mod did, makes the recipient's Max HP diverge → checksum desync.) `GiftedGoldTriggersGainEffects` (default on, host-synced via `GoldConfigMessage`) gates whether those effects fire at all; with it off, a `PlayerCmd.GainGold` prefix (`GainGoldPatches`) does a plain credit that skips `AfterGoldGained` on all clients — preventing two Dragon Fruit owners from farming Max HP by bouncing gold. Idea adapted from `Jzcse/STS2Trade`.
 
 ---
 

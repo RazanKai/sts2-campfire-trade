@@ -17,5 +17,6 @@ This project is free and open-source and credits the original author accordingly
 ## Third-party credits
 
 - Trade option icon ("card exchange") by **Delapouite** via [game-icons.net](https://game-icons.net/1x1/delapouite/card-exchange.html), licensed **CC BY 3.0**.
+- The "gifted gold triggers gain effects" toggle was inspired by a fix in [Jzcse/STS2Trade](https://github.com/Jzcse/STS2Trade) (another STS2Trade derivative). Reimplemented independently here.
 - Config/infrastructure via [Alchyr/BaseLib-StS2](https://github.com/Alchyr/BaseLib-StS2) (MIT).
 - Newer-build port [sirposh777/campfire-trading-update](https://github.com/sirposh777/campfire-trading-update) was also referenced.

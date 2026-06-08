@@ -40,6 +40,15 @@ public class TradeConfig : SimpleModConfig
     /// </summary>
     public static bool EnableGoldGifting { get; set; } = true;
 
+    /// <summary>
+    /// When true (default), gold given via the shop Give Gold button triggers the
+    /// recipient's gain-gold relic effects (e.g. Dragon Fruit's +Max HP) — matching
+    /// normal earned gold. When false, gifted gold is a plain transfer that fires no
+    /// gain-gold effects (prevents two Dragon Fruit owners farming Max HP by bouncing
+    /// gold). Applied identically on every client, so it never desyncs. Host-authoritative.
+    /// </summary>
+    public static bool GiftedGoldTriggersGainEffects { get; set; } = true;
+
     public TradeConfig() { }
 
     public override void SetupConfigUI(Control optionContainer)

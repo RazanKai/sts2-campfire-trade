@@ -133,7 +133,12 @@ internal static class ShopPatchHelper
         var existing = GoldGiftSynchronizer.Instance;
         if (existing != null)
         {
-            if (existing.IsUsingService(netService)) return;
+            if (existing.IsUsingService(netService))
+            {
+                // Re-push the gold-gift rules each shop so host config changes propagate.
+                existing.BroadcastGoldConfig();
+                return;
+            }
             existing.Dispose();
         }
 

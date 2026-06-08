@@ -34,7 +34,7 @@ This whole system can be turned off with **Enable point balance** (default on). 
 
 ## Give Gold at shops
 
-At a merchant (real or event), a **Give Gold** button appears under each teammate's character. Click to send 50 gold; hold for an accelerating repeat to transfer larger amounts. Transfers are deterministic and synced across all clients. The feature is on by default and can be turned off in config.
+At a merchant (real or event), a **Give Gold** button appears under each teammate's character. Click to send 50 gold; hold for an accelerating repeat to transfer larger amounts. Transfers are deterministic and synced across all clients — including the recipient's gain-gold relic effects (e.g. Dragon Fruit's +Max HP), which fire identically on every machine. The **Gifted gold triggers gain effects** toggle (default on) controls whether those effects fire at all; turn it off to prevent two Dragon Fruit owners from farming Max HP by bouncing gold. The whole feature is on by default and can be turned off in config.
 
 ## Configuration
 
@@ -45,6 +45,7 @@ Configured in-game via BaseLib's settings UI. All settings are **host-authoritat
 - **Unlimited trades** (default off — one trade per player per rest site)
 - **Allow starter cards** (default off — let Basic Strikes/Defends trade, valued 1 each)
 - **Enable gold gifting** (default on — show Give Gold buttons at shops)
+- **Gifted gold triggers gain effects** (default on — gifted gold fires gain-gold relics like Dragon Fruit; turn off to stop Max HP farming)
 - **Block on-obtain-hook relics** (default on)
 - **Block quest cards** (default on)
 
@@ -83,4 +84,4 @@ docs/                    Design doc, API audit, prior-art comparison
 
 This mod is **based on [chaendizzle/STS2Trade](https://github.com/chaendizzle/STS2Trade)** ("Campfire Trading", on [Nexus Mods](https://www.nexusmods.com/slaythespire2/mods/107)). The networking, synchronizer, rest-site option, trade UI, and the Give Gold shop feature are taken largely from that mod. The changes on top are: a rarity **point-balance system for cards** (`TradeValidator.cs`, with an on/off toggle); making trade **consume the campfire action** (deferring to the game's native Miniature Tent handling); a fix for a co-op **choice-ID desync** on duplicate selections; an asset-import build step so the trade **icon resolves**; and config toggles for **starter cards** and **gold gifting**. The newer-build port [sirposh777/campfire-trading-update](https://github.com/sirposh777/campfire-trading-update) was also referenced.
 
-The original author's Nexus permissions allow modifying and re-uploading the mod with credit, and prohibit use in mods sold for money — this fork is free and credits the author accordingly. The trade icon ("card exchange") is by Delapouite via [game-icons.net](https://game-icons.net/1x1/delapouite/card-exchange.html) (CC BY 3.0). Config and infrastructure via [Alchyr's BaseLib](https://github.com/Alchyr/BaseLib-StS2) (MIT).
+The original author's Nexus permissions allow modifying and re-uploading the mod with credit, and prohibit use in mods sold for money — this project is free and credits the author accordingly. The trade icon ("card exchange") is by Delapouite via [game-icons.net](https://game-icons.net/1x1/delapouite/card-exchange.html) (CC BY 3.0). The "gifted gold triggers gain effects" toggle was inspired by a fix in [Jzcse/STS2Trade](https://github.com/Jzcse/STS2Trade) (independently reimplemented here). Config and infrastructure via [Alchyr's BaseLib](https://github.com/Alchyr/BaseLib-StS2) (MIT).
