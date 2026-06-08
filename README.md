@@ -75,7 +75,6 @@ docs/                    Design doc, API audit, prior-art comparison
 ## Documentation
 
 - [`docs/campfire-trade-mod-design.md`](docs/campfire-trade-mod-design.md) — full design spec (kept current)
-- [`CLAUDE.md`](CLAUDE.md) — build guide / implementation notes
 
 ## Credits
 
