@@ -32,6 +32,7 @@ Thumbs.db
 
 # ---- Claude Code (personal, per-machine) ----
 .claude/settings.local.json
+CLAUDE.md
 
 # ---- Cloned third-party reference mods (not ours to commit) ----
 refs/
