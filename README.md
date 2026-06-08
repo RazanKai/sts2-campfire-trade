@@ -30,6 +30,8 @@ Trading **consumes the campfire action**, just like Rest or Forge — it's one a
 
 Both sides' **card subtotals must be equal and greater than zero** for Confirm to enable. Upgrades and enchantments are preserved on the traded card but don't change its point value. Potions and relics aren't point-valued — they're governed only by slot caps. So "2 Commons + 1 potion" for "1 Uncommon + 1 relic" is valid (cards: 2 = 2).
 
+This whole system can be turned off with **Enable point balance** (default on). With it off, cards trade freely with no value-matching requirement — slot caps and the non-tradeable rules still apply.
+
 ## Give Gold at shops
 
 At a merchant (real or event), a **Give Gold** button appears under each teammate's character. Click to send 50 gold; hold for an accelerating repeat to transfer larger amounts. Transfers are deterministic and synced across all clients. The feature is on by default and can be turned off in config.
@@ -39,6 +41,7 @@ At a merchant (real or event), a **Give Gold** button appears under each teammat
 Configured in-game via BaseLib's settings UI. All settings are **host-authoritative** — the host's values are synced to clients:
 
 - **Max card / potion / relic slots** per side
+- **Enable point balance** (default on — require matching card values; off = free card trades)
 - **Unlimited trades** (default off — one trade per player per rest site)
 - **Allow starter cards** (default off — let Basic Strikes/Defends trade, valued 1 each)
 - **Enable gold gifting** (default on — show Give Gold buttons at shops)

@@ -63,6 +63,9 @@ public static class TradeValidator
     {
         if (a.Count == 0 && b.Count == 0)
             return true;
+        // Point balance disabled: cards trade freely, any combination allowed.
+        if (!TradeConfig.EnablePointBalance)
+            return true;
         int va = CardValue(a);
         int vb = CardValue(b);
         return va == vb && va > 0;

@@ -57,6 +57,7 @@ A trade with **no cards on either side** (potions/relics only) is allowed as lon
 | `MaxCardSlots` | 1–5 | 3 | Max cards per side |
 | `MaxPotionSlots` | 1–3 | 3 | Max potions per side |
 | `MaxRelicSlots` | 1–3 | 1 | Max relics per side |
+| `EnablePointBalance` | on/off | on | Require matching card values; off = free card trades (caps still apply) |
 | `UnlimitedTrades` | on/off | off | Allow >1 completed trade per player per rest site (trade no longer consumes the action) |
 | `AllowStarterCards` | on/off | off | Allow Basic starter cards to trade (valued 1 each) |
 | `EnableGoldGifting` | on/off | on | Show the Give Gold button at merchant shops |

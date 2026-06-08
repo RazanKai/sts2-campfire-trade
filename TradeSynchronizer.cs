@@ -367,6 +367,7 @@ public class TradeSynchronizer : IDisposable
             BlockQuestCards = TradeConfig.BlockQuestCards,
             AllowStarterCards = TradeConfig.AllowStarterCards,
             EnableGoldGifting = TradeConfig.EnableGoldGifting,
+            EnablePointBalance = TradeConfig.EnablePointBalance,
             MaxCardSlots = TradeConfig.MaxCardSlotsInt,
             MaxPotionSlots = TradeConfig.MaxPotionSlotsInt,
             MaxRelicSlots = TradeConfig.MaxRelicSlotsInt,
@@ -384,6 +385,7 @@ public class TradeSynchronizer : IDisposable
         TradeConfig.BlockQuestCards = message.BlockQuestCards;
         TradeConfig.AllowStarterCards = message.AllowStarterCards;
         TradeConfig.EnableGoldGifting = message.EnableGoldGifting;
+        TradeConfig.EnablePointBalance = message.EnablePointBalance;
         TradeConfig.MaxCardSlots = (CardSlots)message.MaxCardSlots;
         TradeConfig.MaxPotionSlots = (PotionSlots)message.MaxPotionSlots;
         TradeConfig.MaxRelicSlots = (RelicSlots)message.MaxRelicSlots;

@@ -15,6 +15,7 @@ public struct TradeConfigMessage : INetMessage, IPacketSerializable
     public bool BlockQuestCards;
     public bool AllowStarterCards;
     public bool EnableGoldGifting;
+    public bool EnablePointBalance;
     public int MaxCardSlots;
     public int MaxPotionSlots;
     public int MaxRelicSlots;
@@ -31,6 +32,7 @@ public struct TradeConfigMessage : INetMessage, IPacketSerializable
         writer.WriteBool(BlockQuestCards);
         writer.WriteBool(AllowStarterCards);
         writer.WriteBool(EnableGoldGifting);
+        writer.WriteBool(EnablePointBalance);
         writer.WriteInt(MaxCardSlots);
         writer.WriteInt(MaxPotionSlots);
         writer.WriteInt(MaxRelicSlots);
@@ -43,6 +45,7 @@ public struct TradeConfigMessage : INetMessage, IPacketSerializable
         BlockQuestCards = reader.ReadBool();
         AllowStarterCards = reader.ReadBool();
         EnableGoldGifting = reader.ReadBool();
+        EnablePointBalance = reader.ReadBool();
         MaxCardSlots = reader.ReadInt();
         MaxPotionSlots = reader.ReadInt();
         MaxRelicSlots = reader.ReadInt();
@@ -50,6 +53,6 @@ public struct TradeConfigMessage : INetMessage, IPacketSerializable
 
     public override string ToString()
     {
-        return $"TradeConfigMessage(UnlimitedTrades={UnlimitedTrades}, BlockObtainHookRelics={BlockObtainHookRelics}, BlockQuestCards={BlockQuestCards}, AllowStarterCards={AllowStarterCards}, EnableGoldGifting={EnableGoldGifting}, Cards={MaxCardSlots}, Potions={MaxPotionSlots}, Relics={MaxRelicSlots})";
+        return $"TradeConfigMessage(UnlimitedTrades={UnlimitedTrades}, BlockObtainHookRelics={BlockObtainHookRelics}, BlockQuestCards={BlockQuestCards}, AllowStarterCards={AllowStarterCards}, EnableGoldGifting={EnableGoldGifting}, EnablePointBalance={EnablePointBalance}, Cards={MaxCardSlots}, Potions={MaxPotionSlots}, Relics={MaxRelicSlots})";
     }
 }

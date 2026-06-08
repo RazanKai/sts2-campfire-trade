@@ -19,6 +19,14 @@ public class TradeConfig : SimpleModConfig
     public static bool BlockQuestCards { get; set; } = true;
 
     /// <summary>
+    /// When true (default), card trades are rarity point-balanced — both sides' card
+    /// subtotals (Common 1 / Uncommon 2 / Rare 4) must match. When false, cards trade
+    /// freely with no value-matching requirement (slot caps and non-tradeable rules
+    /// still apply). Host-authoritative: synced to clients via TradeConfigMessage.
+    /// </summary>
+    public static bool EnablePointBalance { get; set; } = true;
+
+    /// <summary>
     /// When true, Basic-rarity cards (starter Strikes/Defends) become tradeable and
     /// are valued at 1 point each (same as Common). Off by default — starters are
     /// normally excluded. Host-authoritative: synced to clients via TradeConfigMessage.
