@@ -34,6 +34,16 @@ public class TradeConfig : SimpleModConfig
     public static bool AllowStarterCards { get; set; } = false;
 
     /// <summary>
+    /// When true (default), a completed trade consumes the player's campfire action, just
+    /// like Rest or Forge — done via the game's native ShouldDisableRemainingRestSiteOptions
+    /// (OnSelect returns true). When false, trading is "free": it does not consume the rest
+    /// action, so the player can still Rest/Forge afterward (but still only trades once per
+    /// campfire unless UnlimitedTrades is on). Ignored when UnlimitedTrades is on (trades
+    /// never consume the action in that mode). Host-authoritative: synced via TradeConfigMessage.
+    /// </summary>
+    public static bool TradeConsumesAction { get; set; } = true;
+
+    /// <summary>
     /// When true, "Give Gold" buttons appear under other players at merchant shops,
     /// letting players gift gold to each other. On by default. Host-authoritative:
     /// synced to clients via TradeConfigMessage.

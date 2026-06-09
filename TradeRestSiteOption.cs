@@ -191,11 +191,13 @@ public sealed class TradeRestSiteOption : RestSiteOption
             bool tradeResult = await RunTradeUI();
             MainFile.LogVerbose($"OnSelectLocal: Trade UI result: {tradeResult}");
 
-            if (tradeResult && TradeConfig.UnlimitedTrades)
+            if (tradeResult && (TradeConfig.UnlimitedTrades || !TradeConfig.TradeConsumesAction))
             {
-                // In unlimited mode, return false so the game doesn't remove
-                // this option from the rest site list — player can trade again.
-                MainFile.LogVerbose("OnSelectLocal: Unlimited trades — keeping option available");
+                // Return false so the game does NOT disable the remaining rest-site options,
+                // i.e. the trade does not consume the campfire action. True in unlimited mode
+                // (player can trade again) and when TradeConsumesAction is off (free trades —
+                // CanTrade still gates re-trading to once per campfire when not unlimited).
+                MainFile.LogVerbose("OnSelectLocal: trade does not consume campfire action (unlimited or TradeConsumesAction off)");
                 return false;
             }
 
@@ -263,10 +265,11 @@ public sealed class TradeRestSiteOption : RestSiteOption
             bool result = await tcs.Task;
             MainFile.LogVerbose($"OnSelectRemote: Player {Owner.NetId} trade resolved: {result}");
 
-            // In unlimited mode, return false so the option stays in the list
-            if (result && TradeConfig.UnlimitedTrades)
+            // Return false so the option list isn't disabled — the trade does not consume
+            // the campfire action (unlimited mode, or TradeConsumesAction off).
+            if (result && (TradeConfig.UnlimitedTrades || !TradeConfig.TradeConsumesAction))
             {
-                MainFile.LogVerbose($"OnSelectRemote: Unlimited trades — keeping option available for {Owner.NetId}");
+                MainFile.LogVerbose($"OnSelectRemote: trade does not consume campfire action for {Owner.NetId} (unlimited or TradeConsumesAction off)");
                 return false;
             }
 

@@ -3,7 +3,7 @@
   "name": "Campfire Trade",
   "author": "RazanKai",
   "description": "Player-to-player card, potion, and relic trading at campfires in multiplayer. Cards are rarity-point-balanced.",
-  "version": "1.0.3",
+  "version": "1.1.0",
   "has_pck": true,
   "has_dll": true,
   "dependencies": [

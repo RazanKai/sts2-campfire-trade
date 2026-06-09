@@ -368,6 +368,7 @@ public class TradeSynchronizer : IDisposable
             AllowStarterCards = TradeConfig.AllowStarterCards,
             EnableGoldGifting = TradeConfig.EnableGoldGifting,
             EnablePointBalance = TradeConfig.EnablePointBalance,
+            TradeConsumesAction = TradeConfig.TradeConsumesAction,
             MaxCardSlots = TradeConfig.MaxCardSlotsInt,
             MaxPotionSlots = TradeConfig.MaxPotionSlotsInt,
             MaxRelicSlots = TradeConfig.MaxRelicSlotsInt,
@@ -386,6 +387,7 @@ public class TradeSynchronizer : IDisposable
         TradeConfig.AllowStarterCards = message.AllowStarterCards;
         TradeConfig.EnableGoldGifting = message.EnableGoldGifting;
         TradeConfig.EnablePointBalance = message.EnablePointBalance;
+        TradeConfig.TradeConsumesAction = message.TradeConsumesAction;
         TradeConfig.MaxCardSlots = (CardSlots)message.MaxCardSlots;
         TradeConfig.MaxPotionSlots = (PotionSlots)message.MaxPotionSlots;
         TradeConfig.MaxRelicSlots = (RelicSlots)message.MaxRelicSlots;
