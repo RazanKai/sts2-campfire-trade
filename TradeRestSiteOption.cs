@@ -60,7 +60,7 @@ public sealed class TradeRestSiteOption : RestSiteOption
 
     public TradeRestSiteOption(Player owner) : base(owner)
     {
-        MainFile.Logger.Info($"[TradeRestSiteOption] created for {owner.NetId}, UnlimitedTrades={TradeConfig.UnlimitedTrades}");
+        MainFile.LogVerbose($"[TradeRestSiteOption] created for {owner.NetId}, UnlimitedTrades={TradeConfig.UnlimitedTrades}");
     }
 
     public override async Task<bool> OnSelect()
@@ -77,7 +77,7 @@ public sealed class TradeRestSiteOption : RestSiteOption
         // Reject the duplicate BEFORE reserving a choice id so counters stay symmetric.
         if (sync != null && !sync.TryBeginSelection(Owner.NetId))
         {
-            MainFile.Logger.Info($"OnSelect: duplicate in-flight selection for player {Owner.NetId} ignored (no choice id reserved)");
+            MainFile.LogVerbose($"OnSelect: duplicate in-flight selection for player {Owner.NetId} ignored (no choice id reserved)");
             return false;
         }
 
@@ -87,7 +87,7 @@ public sealed class TradeRestSiteOption : RestSiteOption
             // This ensures HOST and CLIENT track the same number of choices per player,
             // preventing Choice ID desync in the checksum.
             uint choiceId = RunManager.Instance.PlayerChoiceSynchronizer.ReserveChoiceId(Owner);
-            MainFile.Logger.Info($"OnSelect: Reserved choiceId={choiceId} for player {Owner.NetId}");
+            MainFile.LogVerbose($"OnSelect: Reserved choiceId={choiceId} for player {Owner.NetId}");
 
             if (sync == null)
             {
@@ -122,7 +122,7 @@ public sealed class TradeRestSiteOption : RestSiteOption
     /// </summary>
     private async Task<bool> OnSelectLocal(TradeSynchronizer sync, uint choiceId)
     {
-        MainFile.Logger.Info("OnSelectLocal: Starting trade selection flow");
+        MainFile.LogVerbose("OnSelectLocal: Starting trade selection flow");
         sync.Phase = TradePhase.SelectingPartner;
         sync.NotifyStateChanged();
 
@@ -133,7 +133,7 @@ public sealed class TradeRestSiteOption : RestSiteOption
             // Sync the choice with null so counters stay consistent
             RunManager.Instance.PlayerChoiceSynchronizer.SyncLocalChoice(
                 Owner, choiceId, PlayerChoiceResult.FromPlayerId(null));
-            MainFile.Logger.Info("OnSelectLocal: No target selected, cancelling");
+            MainFile.LogVerbose("OnSelectLocal: No target selected, cancelling");
             sync.Phase = TradePhase.Idle;
             sync.NotifyStateChanged();
             return false;
@@ -142,7 +142,7 @@ public sealed class TradeRestSiteOption : RestSiteOption
         // Validate that the target can actually trade
         if (!CanTargetTrade(target, sync))
         {
-            MainFile.Logger.Info($"OnSelectLocal: Target {target.NetId} cannot trade, showing bubble");
+            MainFile.LogVerbose($"OnSelectLocal: Target {target.NetId} cannot trade, showing bubble");
             ShowCantTradeBubble();
             // Sync with null — this is effectively a cancellation
             RunManager.Instance.PlayerChoiceSynchronizer.SyncLocalChoice(
@@ -157,16 +157,16 @@ public sealed class TradeRestSiteOption : RestSiteOption
         // choice counters stay in sync on both machines.
         RunManager.Instance.PlayerChoiceSynchronizer.SyncLocalChoice(
             Owner, choiceId, PlayerChoiceResult.FromPlayerId(target.NetId));
-        MainFile.Logger.Info($"OnSelectLocal: Synced choice with target={target.NetId}");
+        MainFile.LogVerbose($"OnSelectLocal: Synced choice with target={target.NetId}");
         sync.SelectTarget(target.NetId);
-        MainFile.Logger.Info($"OnSelectLocal: After SelectTarget, Phase={sync.Phase}");
+        MainFile.LogVerbose($"OnSelectLocal: After SelectTarget, Phase={sync.Phase}");
 
         if (sync.Phase != TradePhase.Trading)
         {
             // Show a "waiting for [player]" thought bubble on our character
             ShowWaitingBubble(target);
 
-            MainFile.Logger.Info("OnSelectLocal: Waiting for partner match...");
+            MainFile.LogVerbose("OnSelectLocal: Waiting for partner match...");
             bool matched = await WaitForPartnerMatch(target.NetId);
 
             // Remove the waiting bubble
@@ -174,28 +174,28 @@ public sealed class TradeRestSiteOption : RestSiteOption
 
             if (!matched)
             {
-                MainFile.Logger.Info("OnSelectLocal: Partner match failed/cancelled");
+                MainFile.LogVerbose("OnSelectLocal: Partner match failed/cancelled");
                 sync.DeselectTarget();
                 return false;
             }
-            MainFile.Logger.Info("OnSelectLocal: Partner matched!");
+            MainFile.LogVerbose("OnSelectLocal: Partner matched!");
         }
         else
         {
-            MainFile.Logger.Info("OnSelectLocal: Already in Trading phase, skipping wait");
+            MainFile.LogVerbose("OnSelectLocal: Already in Trading phase, skipping wait");
         }
 
-        MainFile.Logger.Info("OnSelectLocal: Opening trade UI...");
+        MainFile.LogVerbose("OnSelectLocal: Opening trade UI...");
         try
         {
             bool tradeResult = await RunTradeUI();
-            MainFile.Logger.Info($"OnSelectLocal: Trade UI result: {tradeResult}");
+            MainFile.LogVerbose($"OnSelectLocal: Trade UI result: {tradeResult}");
 
             if (tradeResult && TradeConfig.UnlimitedTrades)
             {
                 // In unlimited mode, return false so the game doesn't remove
                 // this option from the rest site list — player can trade again.
-                MainFile.Logger.Info("OnSelectLocal: Unlimited trades — keeping option available");
+                MainFile.LogVerbose("OnSelectLocal: Unlimited trades — keeping option available");
                 return false;
             }
 
@@ -214,23 +214,23 @@ public sealed class TradeRestSiteOption : RestSiteOption
     /// </summary>
     private async Task<bool> OnSelectRemote(TradeSynchronizer sync, uint choiceId)
     {
-        MainFile.Logger.Info($"OnSelectRemote: Player {Owner.NetId} waiting for remote choice (choiceId={choiceId})...");
+        MainFile.LogVerbose($"OnSelectRemote: Player {Owner.NetId} waiting for remote choice (choiceId={choiceId})...");
 
         // Wait for the remote player's choice (who they targeted).
         // This keeps choice counters in sync with the local machine.
         var choiceResult = await RunManager.Instance.PlayerChoiceSynchronizer.WaitForRemoteChoice(Owner, choiceId);
         ulong? targetId = choiceResult.AsPlayerId();
-        MainFile.Logger.Info($"OnSelectRemote: Player {Owner.NetId} remote choice received: targetId={targetId}");
+        MainFile.LogVerbose($"OnSelectRemote: Player {Owner.NetId} remote choice received: targetId={targetId}");
 
         if (targetId == null)
         {
             // Remote player cancelled targeting — return false so options re-show
-            MainFile.Logger.Info($"OnSelectRemote: Player {Owner.NetId} cancelled targeting");
+            MainFile.LogVerbose($"OnSelectRemote: Player {Owner.NetId} cancelled targeting");
             return false;
         }
 
         // Remote player selected a valid target. Now wait for the trade to complete or cancel.
-        MainFile.Logger.Info($"OnSelectRemote: Player {Owner.NetId} targeted {targetId}, waiting for trade resolution...");
+        MainFile.LogVerbose($"OnSelectRemote: Player {Owner.NetId} targeted {targetId}, waiting for trade resolution...");
 
         var tcs = new TaskCompletionSource<bool>();
         var ownerNetId = Owner.NetId;
@@ -256,17 +256,17 @@ public sealed class TradeRestSiteOption : RestSiteOption
 
             if (completedTask == timeoutTask)
             {
-                MainFile.Logger.Info($"OnSelectRemote: Player {Owner.NetId} timed out waiting for trade resolution");
+                MainFile.LogVerbose($"OnSelectRemote: Player {Owner.NetId} timed out waiting for trade resolution");
                 return false;
             }
 
             bool result = await tcs.Task;
-            MainFile.Logger.Info($"OnSelectRemote: Player {Owner.NetId} trade resolved: {result}");
+            MainFile.LogVerbose($"OnSelectRemote: Player {Owner.NetId} trade resolved: {result}");
 
             // In unlimited mode, return false so the option stays in the list
             if (result && TradeConfig.UnlimitedTrades)
             {
-                MainFile.Logger.Info($"OnSelectRemote: Unlimited trades — keeping option available for {Owner.NetId}");
+                MainFile.LogVerbose($"OnSelectRemote: Unlimited trades — keeping option available for {Owner.NetId}");
                 return false;
             }
 
@@ -319,12 +319,12 @@ public sealed class TradeRestSiteOption : RestSiteOption
 
         void OnTradeStarted()
         {
-            MainFile.Logger.Info("WaitForPartnerMatch: TradeStarted event received!");
+            MainFile.LogVerbose("WaitForPartnerMatch: TradeStarted event received!");
             tcs.TrySetResult(true);
         }
         void OnCancelled()
         {
-            MainFile.Logger.Info("WaitForPartnerMatch: TradeCancelled event received");
+            MainFile.LogVerbose("WaitForPartnerMatch: TradeCancelled event received");
             tcs.TrySetResult(false);
         }
 
@@ -338,7 +338,7 @@ public sealed class TradeRestSiteOption : RestSiteOption
             inputHandler = new WaitingInputHandler();
             inputHandler.Setup(() =>
             {
-                MainFile.Logger.Info("WaitForPartnerMatch: User cancelled via input");
+                MainFile.LogVerbose("WaitForPartnerMatch: User cancelled via input");
                 _waitCts?.Cancel();
                 tcs.TrySetResult(false);
             });
@@ -348,7 +348,7 @@ public sealed class TradeRestSiteOption : RestSiteOption
             if (inputParent != null)
             {
                 inputParent.AddChildSafely(inputHandler);
-                MainFile.Logger.Info("WaitForPartnerMatch: Input handler added to scene tree");
+                MainFile.LogVerbose("WaitForPartnerMatch: Input handler added to scene tree");
             }
             else
             {
@@ -368,12 +368,12 @@ public sealed class TradeRestSiteOption : RestSiteOption
 
             if (completedTask == timeoutTask || completedTask == cancelTask)
             {
-                MainFile.Logger.Info($"WaitForPartnerMatch: Ended by {(completedTask == timeoutTask ? "timeout" : "cancellation")}");
+                MainFile.LogVerbose($"WaitForPartnerMatch: Ended by {(completedTask == timeoutTask ? "timeout" : "cancellation")}");
                 return false;
             }
 
             bool result = await tcs.Task;
-            MainFile.Logger.Info($"WaitForPartnerMatch: Resolved with result={result}");
+            MainFile.LogVerbose($"WaitForPartnerMatch: Resolved with result={result}");
             return result;
         }
         finally
@@ -421,7 +421,7 @@ public sealed class TradeRestSiteOption : RestSiteOption
             // Add to scene tree first, then position at the character's thought bubble anchor
             myCharacter.AddChildSafely(_waitingBubble);
             _waitingBubble.GlobalPosition = myCharacter.GetRestSiteOptionAnchor().GlobalPosition;
-            MainFile.Logger.Info($"Showing waiting bubble for partner {target.NetId}");
+            MainFile.LogVerbose($"Showing waiting bubble for partner {target.NetId}");
         }
         catch (Exception e)
         {
@@ -447,7 +447,7 @@ public sealed class TradeRestSiteOption : RestSiteOption
             return false;
         }
 
-        MainFile.Logger.Info($"RunTradeUI: ActiveSession exists. Local={sync.ActiveSession.LocalPlayerId}, Partner={sync.ActiveSession.PartnerPlayerId}");
+        MainFile.LogVerbose($"RunTradeUI: ActiveSession exists. Local={sync.ActiveSession.LocalPlayerId}, Partner={sync.ActiveSession.PartnerPlayerId}");
 
         _tradeCompletionSource = new TaskCompletionSource<bool>();
 
@@ -469,19 +469,19 @@ public sealed class TradeRestSiteOption : RestSiteOption
         try
         {
             tradeScreen = NTradeScreen.Create(sync);
-            MainFile.Logger.Info($"RunTradeUI: NTradeScreen created. NRun.Instance={NRun.Instance != null}");
+            MainFile.LogVerbose($"RunTradeUI: NTradeScreen created. NRun.Instance={NRun.Instance != null}");
 
             // Try to find a valid parent for the trade screen
             Node? parent = null;
             if (NRun.Instance?.GlobalUi != null)
             {
                 parent = NRun.Instance.GlobalUi;
-                MainFile.Logger.Info("RunTradeUI: Using GlobalUi as parent");
+                MainFile.LogVerbose("RunTradeUI: Using GlobalUi as parent");
             }
             else if (NRestSiteRoom.Instance != null)
             {
                 parent = NRestSiteRoom.Instance;
-                MainFile.Logger.Info("RunTradeUI: GlobalUi null, using NRestSiteRoom as parent");
+                MainFile.LogVerbose("RunTradeUI: GlobalUi null, using NRestSiteRoom as parent");
             }
             else
             {
@@ -493,7 +493,7 @@ public sealed class TradeRestSiteOption : RestSiteOption
 
             // Ensure the trade screen renders on top of other UI
             tradeScreen.ZIndex = 100;
-            MainFile.Logger.Info("RunTradeUI: Trade screen added to scene tree, waiting for completion...");
+            MainFile.LogVerbose("RunTradeUI: Trade screen added to scene tree, waiting for completion...");
 
             return await _tradeCompletionSource.Task;
         }
@@ -546,7 +546,7 @@ public sealed class TradeRestSiteOption : RestSiteOption
         // Already traded this rest site (unless unlimited trades is on)
         if (!TradeConfig.UnlimitedTrades && sync.PlayersWhoTraded.Contains(target.NetId))
         {
-            MainFile.Logger.Info($"CanTargetTrade: {target.NetId} already traded");
+            MainFile.LogVerbose($"CanTargetTrade: {target.NetId} already traded");
             return false;
         }
 
@@ -556,7 +556,7 @@ public sealed class TradeRestSiteOption : RestSiteOption
         var targetOptions = restSiteSync.GetOptionsForPlayer(target.NetId);
         if (targetOptions.Count == 0)
         {
-            MainFile.Logger.Info($"CanTargetTrade: {target.NetId} has no remaining options (already acted)");
+            MainFile.LogVerbose($"CanTargetTrade: {target.NetId} has no remaining options (already acted)");
             return false;
         }
 
@@ -586,7 +586,7 @@ public sealed class TradeRestSiteOption : RestSiteOption
 
             myCharacter.AddChildSafely(bubble);
             bubble.GlobalPosition = myCharacter.GetRestSiteOptionAnchor().GlobalPosition;
-            MainFile.Logger.Info("Showing 'can't trade' bubble");
+            MainFile.LogVerbose("Showing 'can't trade' bubble");
         }
         catch (Exception e)
         {

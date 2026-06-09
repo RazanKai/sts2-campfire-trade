@@ -81,7 +81,7 @@ public class TradeSynchronizer : IDisposable
         _playerCollection = playerCollection;
         _localPlayerId = localPlayerId;
 
-        MainFile.Logger.Info($"TradeSynchronizer: Registering message handlers on {netService.GetType().Name}, IsConnected={netService.IsConnected}");
+        MainFile.LogVerbose($"TradeSynchronizer: Registering message handlers on {netService.GetType().Name}, IsConnected={netService.IsConnected}");
         _netService.RegisterMessageHandler<TradeTargetMessage>(HandleTradeTarget);
         _netService.RegisterMessageHandler<TradeOfferMessage>(HandleTradeOffer);
         _netService.RegisterMessageHandler<TradeConfirmMessage>(HandleTradeConfirm);
@@ -135,7 +135,7 @@ public class TradeSynchronizer : IDisposable
         PendingRequests[_localPlayerId] = targetPlayerId;
         Phase = TradePhase.WaitingForPartner;
 
-        MainFile.Logger.Info($"SelectTarget: Sending TradeTargetMessage to {targetPlayerId}, netService.IsConnected={_netService.IsConnected}");
+        MainFile.LogVerbose($"SelectTarget: Sending TradeTargetMessage to {targetPlayerId}, netService.IsConnected={_netService.IsConnected}");
         _netService.SendMessage(new TradeTargetMessage
         {
             hasTarget = true,
@@ -214,8 +214,8 @@ public class TradeSynchronizer : IDisposable
 
     public void CancelTrade()
     {
-        MainFile.Logger.Info($"CancelTrade: Sending TradeCancelMessage. Phase={Phase}, ActiveSession={(ActiveSession != null ? $"Local={ActiveSession.LocalPlayerId},Partner={ActiveSession.PartnerPlayerId}" : "null")}");
-        MainFile.Logger.Info($"CancelTrade: Stack trace: {Environment.StackTrace}");
+        MainFile.LogVerbose($"CancelTrade: Sending TradeCancelMessage. Phase={Phase}, ActiveSession={(ActiveSession != null ? $"Local={ActiveSession.LocalPlayerId},Partner={ActiveSession.PartnerPlayerId}" : "null")}");
+        MainFile.LogVerbose($"CancelTrade: Stack trace: {Environment.StackTrace}");
         _netService.SendMessage(new TradeCancelMessage());
 
         CleanupTrade();
@@ -229,7 +229,7 @@ public class TradeSynchronizer : IDisposable
 
     private void HandleTradeTarget(TradeTargetMessage message, ulong senderId)
     {
-        MainFile.Logger.Info($"HandleTradeTarget: from={senderId}, hasTarget={message.hasTarget}, target={message.targetPlayerId}, localId={_localPlayerId}");
+        MainFile.LogVerbose($"HandleTradeTarget: from={senderId}, hasTarget={message.hasTarget}, target={message.targetPlayerId}, localId={_localPlayerId}");
         if (senderId == _localPlayerId) return;
 
         if (message.hasTarget)
@@ -346,7 +346,7 @@ public class TradeSynchronizer : IDisposable
         if (_observedSession != null &&
             (senderId == _observedSession.LocalPlayerId || senderId == _observedSession.PartnerPlayerId))
         {
-            MainFile.Logger.Info($"Observed trade cancelled by {senderId}");
+            MainFile.LogVerbose($"Observed trade cancelled by {senderId}");
             _observedSession = null;
         }
     }
@@ -359,7 +359,7 @@ public class TradeSynchronizer : IDisposable
     {
         if (_netService is not INetHostGameService) return;
 
-        MainFile.Logger.Info($"BroadcastConfig: UnlimitedTrades={TradeConfig.UnlimitedTrades}, BlockObtainHookRelics={TradeConfig.BlockObtainHookRelics}, BlockQuestCards={TradeConfig.BlockQuestCards}, Cards={TradeConfig.MaxCardSlots}, Potions={TradeConfig.MaxPotionSlots}, Relics={TradeConfig.MaxRelicSlots}");
+        MainFile.LogVerbose($"BroadcastConfig: UnlimitedTrades={TradeConfig.UnlimitedTrades}, BlockObtainHookRelics={TradeConfig.BlockObtainHookRelics}, BlockQuestCards={TradeConfig.BlockQuestCards}, Cards={TradeConfig.MaxCardSlots}, Potions={TradeConfig.MaxPotionSlots}, Relics={TradeConfig.MaxRelicSlots}");
         _netService.SendMessage(new TradeConfigMessage
         {
             UnlimitedTrades = TradeConfig.UnlimitedTrades,
@@ -379,7 +379,7 @@ public class TradeSynchronizer : IDisposable
         // Only clients apply the host's config; the host ignores its own broadcast
         if (_netService is INetHostGameService) return;
 
-        MainFile.Logger.Info($"HandleTradeConfig: Applying host config - UnlimitedTrades={message.UnlimitedTrades}, BlockObtainHookRelics={message.BlockObtainHookRelics}, BlockQuestCards={message.BlockQuestCards}, Cards={message.MaxCardSlots}, Potions={message.MaxPotionSlots}, Relics={message.MaxRelicSlots}");
+        MainFile.LogVerbose($"HandleTradeConfig: Applying host config - UnlimitedTrades={message.UnlimitedTrades}, BlockObtainHookRelics={message.BlockObtainHookRelics}, BlockQuestCards={message.BlockQuestCards}, Cards={message.MaxCardSlots}, Potions={message.MaxPotionSlots}, Relics={message.MaxRelicSlots}");
         TradeConfig.UnlimitedTrades = message.UnlimitedTrades;
         TradeConfig.BlockObtainHookRelics = message.BlockObtainHookRelics;
         TradeConfig.BlockQuestCards = message.BlockQuestCards;
@@ -415,7 +415,7 @@ public class TradeSynchronizer : IDisposable
             {
                 if (PendingRequests.TryGetValue(localTarget, out ulong remoteTarget))
                 {
-                    MainFile.Logger.Info($"CheckForMatch: localTarget={localTarget}, remoteTarget={remoteTarget}, localId={_localPlayerId}");
+                    MainFile.LogVerbose($"CheckForMatch: localTarget={localTarget}, remoteTarget={remoteTarget}, localId={_localPlayerId}");
                     if (remoteTarget == _localPlayerId)
                     {
                         BeginTradeSession(localTarget);
@@ -424,12 +424,12 @@ public class TradeSynchronizer : IDisposable
                 }
                 else
                 {
-                    MainFile.Logger.Info($"CheckForMatch: no remote target yet (localTarget={localTarget})");
+                    MainFile.LogVerbose($"CheckForMatch: no remote target yet (localTarget={localTarget})");
                 }
             }
             else
             {
-                MainFile.Logger.Info($"CheckForMatch: no local target yet (localId={_localPlayerId})");
+                MainFile.LogVerbose($"CheckForMatch: no local target yet (localId={_localPlayerId})");
             }
         }
 
@@ -464,7 +464,7 @@ public class TradeSynchronizer : IDisposable
         PendingRequests.Remove(_localPlayerId);
         PendingRequests.Remove(partnerId);
 
-        MainFile.Logger.Info($"Trade session started between {_localPlayerId} and {partnerId}");
+        MainFile.LogVerbose($"Trade session started between {_localPlayerId} and {partnerId}");
         TradeStarted?.Invoke();
         TradeStateChanged?.Invoke();
     }
@@ -482,7 +482,7 @@ public class TradeSynchronizer : IDisposable
         PendingRequests.Remove(playerA);
         PendingRequests.Remove(playerB);
 
-        MainFile.Logger.Info($"Observing trade between {first} and {second} (local player {_localPlayerId} is not involved)");
+        MainFile.LogVerbose($"Observing trade between {first} and {second} (local player {_localPlayerId} is not involved)");
     }
 
     // =========================================================================
@@ -490,6 +490,16 @@ public class TradeSynchronizer : IDisposable
     // =========================================================================
 
     private async void ExecuteTrade()
+    {
+        // async void is forced by the event-driven call site. Guard the WHOLE body: the
+        // inner try/catch below only covers ExecuteTradeCoreAsync, but the tail
+        // (TradeCompleted subscribers, ObtainPendingRelics) can also throw — and in an
+        // async void that fault is uncatchable and can desync clients mid-trade.
+        try { await ExecuteTradeImpl(); }
+        catch (Exception e) { MainFile.Logger.Error($"ExecuteTrade: unhandled exception escaped async void: {e}"); }
+    }
+
+    private async Task ExecuteTradeImpl()
     {
         if (ActiveSession == null) return;
 
@@ -502,7 +512,7 @@ public class TradeSynchronizer : IDisposable
             return;
         }
 
-        MainFile.Logger.Info($"Executing trade between {localPlayer.NetId} and {partnerPlayer.NetId}");
+        MainFile.LogVerbose($"Executing trade between {localPlayer.NetId} and {partnerPlayer.NetId}");
 
         PlayersWhoTraded.Add(ActiveSession.LocalPlayerId);
         PlayersWhoTraded.Add(ActiveSession.PartnerPlayerId);
@@ -521,7 +531,7 @@ public class TradeSynchronizer : IDisposable
             MainFile.Logger.Error($"ExecuteTrade: ExecuteTradeCoreAsync threw: {e}");
         }
 
-        MainFile.Logger.Info("Trade executed successfully");
+        MainFile.LogVerbose("Trade executed successfully");
         var completedA = ActiveSession.LocalPlayerId;
         var completedB = ActiveSession.PartnerPlayerId;
         TradeCompleted?.Invoke(completedA, completedB);
@@ -544,6 +554,13 @@ public class TradeSynchronizer : IDisposable
 
     private async void ExecuteObservedTrade()
     {
+        // See ExecuteTrade: guard the whole body so a tail throw can't fault async void.
+        try { await ExecuteObservedTradeImpl(); }
+        catch (Exception e) { MainFile.Logger.Error($"ExecuteObservedTrade: unhandled exception escaped async void: {e}"); }
+    }
+
+    private async Task ExecuteObservedTradeImpl()
+    {
         if (_observedSession == null) return;
 
         var playerA = _playerCollection.GetPlayer(_observedSession.LocalPlayerId);
@@ -556,7 +573,7 @@ public class TradeSynchronizer : IDisposable
             return;
         }
 
-        MainFile.Logger.Info($"Executing observed trade between {playerA.NetId} and {playerB.NetId} (local={_localPlayerId})");
+        MainFile.LogVerbose($"Executing observed trade between {playerA.NetId} and {playerB.NetId} (local={_localPlayerId})");
 
         PlayersWhoTraded.Add(_observedSession.LocalPlayerId);
         PlayersWhoTraded.Add(_observedSession.PartnerPlayerId);
@@ -573,7 +590,7 @@ public class TradeSynchronizer : IDisposable
             MainFile.Logger.Error($"ExecuteObservedTrade: ExecuteTradeCoreAsync threw: {e}");
         }
 
-        MainFile.Logger.Info("Observed trade executed successfully");
+        MainFile.LogVerbose("Observed trade executed successfully");
         var observedA = _observedSession.LocalPlayerId;
         var observedB = _observedSession.PartnerPlayerId;
         _observedSession = null;
@@ -605,7 +622,7 @@ public class TradeSynchronizer : IDisposable
     {
         if (pendingRelicObtains.Count == 0) return;
 
-        MainFile.Logger.Info($"=== OBTAINING {pendingRelicObtains.Count} TRADED RELICS ===");
+        MainFile.LogVerbose($"=== OBTAINING {pendingRelicObtains.Count} TRADED RELICS ===");
 
         // Group by target player, then obtain each player's relics concurrently
         var byPlayer = pendingRelicObtains
@@ -616,7 +633,7 @@ public class TradeSynchronizer : IDisposable
         var tasks = byPlayer.Select(group => ObtainRelicsForPlayer(group.ToList()));
         await Task.WhenAll(tasks);
 
-        MainFile.Logger.Info($"=== ALL TRADED RELICS OBTAINED ===");
+        MainFile.LogVerbose($"=== ALL TRADED RELICS OBTAINED ===");
     }
 
     private async Task ObtainRelicsForPlayer(List<(SerializableRelic serializable, Player target, int preExpand)> relics)
@@ -626,16 +643,16 @@ public class TradeSynchronizer : IDisposable
             try
             {
                 var fresh = RelicModel.FromSerializable(serializable);
-                MainFile.Logger.Info($"  RelicCmd.Obtain: {fresh.Id.Entry} -> {target.NetId}, relics before: {target.Relics.Count}");
+                MainFile.LogVerbose($"  RelicCmd.Obtain: {fresh.Id.Entry} -> {target.NetId}, relics before: {target.Relics.Count}");
                 await RelicCmd.Obtain(fresh, target);
-                MainFile.Logger.Info($"  After Obtain: {target.NetId} relics={target.Relics.Count}");
+                MainFile.LogVerbose($"  After Obtain: {target.NetId} relics={target.Relics.Count}");
 
                 // PotionBelt: undo pre-expansion since Obtain fires AfterObtained
                 // which expands slots again
                 if (fresh is PotionBelt obtainedBelt && preExpand > 0)
                 {
                     int slots = obtainedBelt.DynamicVars["PotionSlots"].IntValue;
-                    MainFile.Logger.Info($"    Undoing pre-expansion of {slots} for PotionBelt on {target.NetId}");
+                    MainFile.LogVerbose($"    Undoing pre-expansion of {slots} for PotionBelt on {target.NetId}");
                     await PlayerCmd.LoseMaxPotionCount(slots, target);
                 }
             }
@@ -666,7 +683,7 @@ public class TradeSynchronizer : IDisposable
             var potionInfo = player.PotionSlots != null
                 ? string.Join(", ", player.PotionSlots.Select((p, i) => $"[{i}]={p?.Id.Entry ?? "empty"}"))
                 : "null";
-            MainFile.Logger.Info($"[{phase}] Player {player.NetId}: " +
+            MainFile.LogVerbose($"[{phase}] Player {player.NetId}: " +
                                 $"DeckCount={deckCount} ({deckCards}), " +
                                 $"RelicCount={relicCount} ({relicList}), " +
                                 $"Potions=({potionInfo})");
@@ -700,9 +717,9 @@ public class TradeSynchronizer : IDisposable
 
         try
         {
-            MainFile.Logger.Info($"=== TRADE EXECUTION START ===");
-            MainFile.Logger.Info($"PlayerA={playerA.NetId}, PlayerB={playerB.NetId}");
-            MainFile.Logger.Info($"RunState same object: {ReferenceEquals(runStateA, runStateB)}");
+            MainFile.LogVerbose($"=== TRADE EXECUTION START ===");
+            MainFile.LogVerbose($"PlayerA={playerA.NetId}, PlayerB={playerB.NetId}");
+            MainFile.LogVerbose($"RunState same object: {ReferenceEquals(runStateA, runStateB)}");
 
             // Log full state BEFORE trade
             LogPlayerState("BEFORE TRADE", playerA);
@@ -720,16 +737,16 @@ public class TradeSynchronizer : IDisposable
                 .Select(i => playerB.Deck.Cards[i])
                 .ToList();
 
-            MainFile.Logger.Info($"Phase 0: A offers cards at indices [{string.Join(",", offerA.CardDeckIndices)}] = [{string.Join(",", aCards.Select(c => c.Id.Entry))}]");
-            MainFile.Logger.Info($"Phase 0: B offers cards at indices [{string.Join(",", offerB.CardDeckIndices)}] = [{string.Join(",", bCards.Select(c => c.Id.Entry))}]");
+            MainFile.LogVerbose($"Phase 0: A offers cards at indices [{string.Join(",", offerA.CardDeckIndices)}] = [{string.Join(",", aCards.Select(c => c.Id.Entry))}]");
+            MainFile.LogVerbose($"Phase 0: B offers cards at indices [{string.Join(",", offerB.CardDeckIndices)}] = [{string.Join(",", bCards.Select(c => c.Id.Entry))}]");
 
             var aCardClones = aCards.Select(c => (CardModel)c.ClonePreservingMutability()).ToList();
             var bCardClones = bCards.Select(c => (CardModel)c.ClonePreservingMutability()).ToList();
 
             foreach (var clone in aCardClones)
-                MainFile.Logger.Info($"  Clone A: {clone.Id.Entry}, Owner={clone.Owner?.NetId}, HasBeenRemovedFromState={clone.HasBeenRemovedFromState}, Pile={clone.Pile?.Type}");
+                MainFile.LogVerbose($"  Clone A: {clone.Id.Entry}, Owner={clone.Owner?.NetId}, HasBeenRemovedFromState={clone.HasBeenRemovedFromState}, Pile={clone.Pile?.Type}");
             foreach (var clone in bCardClones)
-                MainFile.Logger.Info($"  Clone B: {clone.Id.Entry}, Owner={clone.Owner?.NetId}, HasBeenRemovedFromState={clone.HasBeenRemovedFromState}, Pile={clone.Pile?.Type}");
+                MainFile.LogVerbose($"  Clone B: {clone.Id.Entry}, Owner={clone.Owner?.NetId}, HasBeenRemovedFromState={clone.HasBeenRemovedFromState}, Pile={clone.Pile?.Type}");
 
             // Potions: save IDs for creating fresh instances after removal
             var aPotions = offerA.PotionSlotIndices
@@ -744,8 +761,8 @@ public class TradeSynchronizer : IDisposable
             var aPotionIds = aPotions.Select(p => p.Id).ToList();
             var bPotionIds = bPotions.Select(p => p.Id).ToList();
 
-            MainFile.Logger.Info($"Phase 0: A offers potions [{string.Join(",", aPotionIds.Select(id => id.Entry))}]");
-            MainFile.Logger.Info($"Phase 0: B offers potions [{string.Join(",", bPotionIds.Select(id => id.Entry))}]");
+            MainFile.LogVerbose($"Phase 0: A offers potions [{string.Join(",", aPotionIds.Select(id => id.Entry))}]");
+            MainFile.LogVerbose($"Phase 0: B offers potions [{string.Join(",", bPotionIds.Select(id => id.Entry))}]");
 
             // Relics: serialize state before removal (preserves SavedProperty counters/flags)
             var aRelics = offerA.RelicIndices
@@ -760,58 +777,58 @@ public class TradeSynchronizer : IDisposable
             var aRelicSerializables = aRelics.Select(r => r.ToSerializable()).ToList();
             var bRelicSerializables = bRelics.Select(r => r.ToSerializable()).ToList();
 
-            MainFile.Logger.Info($"Phase 0: A offers relics [{string.Join(",", aRelics.Select(r => r.Id.Entry))}]");
-            MainFile.Logger.Info($"Phase 0: B offers relics [{string.Join(",", bRelics.Select(r => r.Id.Entry))}]");
+            MainFile.LogVerbose($"Phase 0: A offers relics [{string.Join(",", aRelics.Select(r => r.Id.Entry))}]");
+            MainFile.LogVerbose($"Phase 0: B offers relics [{string.Join(",", bRelics.Select(r => r.Id.Entry))}]");
 
             // === Phase 1: Remove ALL items from both players ===
             // Removals first so potion slots are freed before additions.
 
-            MainFile.Logger.Info($"=== Phase 1: REMOVALS ===");
+            MainFile.LogVerbose($"=== Phase 1: REMOVALS ===");
 
             foreach (var card in aCards)
             {
-                MainFile.Logger.Info($"  Removing card {card.Id.Entry} from A ({playerA.NetId}), InDeck={card.Pile?.Type}");
+                MainFile.LogVerbose($"  Removing card {card.Id.Entry} from A ({playerA.NetId}), InDeck={card.Pile?.Type}");
                 await CardPileCmd.RemoveFromDeck(card, showPreview: false);
-                MainFile.Logger.Info($"    After removal: HasBeenRemovedFromState={card.HasBeenRemovedFromState}");
+                MainFile.LogVerbose($"    After removal: HasBeenRemovedFromState={card.HasBeenRemovedFromState}");
             }
             foreach (var card in bCards)
             {
-                MainFile.Logger.Info($"  Removing card {card.Id.Entry} from B ({playerB.NetId}), InDeck={card.Pile?.Type}");
+                MainFile.LogVerbose($"  Removing card {card.Id.Entry} from B ({playerB.NetId}), InDeck={card.Pile?.Type}");
                 await CardPileCmd.RemoveFromDeck(card, showPreview: false);
-                MainFile.Logger.Info($"    After removal: HasBeenRemovedFromState={card.HasBeenRemovedFromState}");
+                MainFile.LogVerbose($"    After removal: HasBeenRemovedFromState={card.HasBeenRemovedFromState}");
             }
 
             foreach (var potion in aPotions)
             {
-                MainFile.Logger.Info($"  Discarding potion {potion.Id.Entry} from A ({playerA.NetId})");
+                MainFile.LogVerbose($"  Discarding potion {potion.Id.Entry} from A ({playerA.NetId})");
                 await PotionCmd.Discard(potion);
             }
             foreach (var potion in bPotions)
             {
-                MainFile.Logger.Info($"  Discarding potion {potion.Id.Entry} from B ({playerB.NetId})");
+                MainFile.LogVerbose($"  Discarding potion {potion.Id.Entry} from B ({playerB.NetId})");
                 await PotionCmd.Discard(potion);
             }
 
             foreach (var relic in aRelics)
             {
-                MainFile.Logger.Info($"  Removing relic {relic.Id.Entry} from A ({playerA.NetId})");
+                MainFile.LogVerbose($"  Removing relic {relic.Id.Entry} from A ({playerA.NetId})");
                 await RelicCmd.Remove(relic);
                 // PotionBelt.AfterRemoved doesn't reduce MaxPotionCount, so do it manually
                 if (relic is PotionBelt beltA)
                 {
                     int slots = beltA.DynamicVars["PotionSlots"].IntValue;
-                    MainFile.Logger.Info($"  PotionBelt removed from A — reducing MaxPotionCount by {slots}");
+                    MainFile.LogVerbose($"  PotionBelt removed from A — reducing MaxPotionCount by {slots}");
                     await PlayerCmd.LoseMaxPotionCount(slots, playerA);
                 }
             }
             foreach (var relic in bRelics)
             {
-                MainFile.Logger.Info($"  Removing relic {relic.Id.Entry} from B ({playerB.NetId})");
+                MainFile.LogVerbose($"  Removing relic {relic.Id.Entry} from B ({playerB.NetId})");
                 await RelicCmd.Remove(relic);
                 if (relic is PotionBelt beltB)
                 {
                     int slots = beltB.DynamicVars["PotionSlots"].IntValue;
-                    MainFile.Logger.Info($"  PotionBelt removed from B — reducing MaxPotionCount by {slots}");
+                    MainFile.LogVerbose($"  PotionBelt removed from B — reducing MaxPotionCount by {slots}");
                     await PlayerCmd.LoseMaxPotionCount(slots, playerB);
                 }
             }
@@ -821,20 +838,20 @@ public class TradeSynchronizer : IDisposable
             LogPlayerState("AFTER REMOVALS", playerB);
 
             // === Phase 2: Add ALL items to destination players ===
-            MainFile.Logger.Info($"=== Phase 2: ADDITIONS ===");
+            MainFile.LogVerbose($"=== Phase 2: ADDITIONS ===");
 
             // A's cards go to B
             foreach (var clone in aCardClones)
             {
-                MainFile.Logger.Info($"  Adding card {clone.Id.Entry} to B ({playerB.NetId})");
-                MainFile.Logger.Info($"    Before: Owner={clone.Owner?.NetId}, HasBeenRemovedFromState={clone.HasBeenRemovedFromState}, Pile={clone.Pile?.Type}");
+                MainFile.LogVerbose($"  Adding card {clone.Id.Entry} to B ({playerB.NetId})");
+                MainFile.LogVerbose($"    Before: Owner={clone.Owner?.NetId}, HasBeenRemovedFromState={clone.HasBeenRemovedFromState}, Pile={clone.Pile?.Type}");
                 clone.Owner = null;
                 runStateA.AddCard(clone, playerB);
                 var inRunState = runStateA.ContainsCard(clone);
-                MainFile.Logger.Info($"    After AddCard: Owner={clone.Owner?.NetId}, InRunState={inRunState}, Pile={clone.Pile?.Type}");
+                MainFile.LogVerbose($"    After AddCard: Owner={clone.Owner?.NetId}, InRunState={inRunState}, Pile={clone.Pile?.Type}");
                 var addResult = await CardPileCmd.Add(clone, PileType.Deck, skipVisuals: false);
-                MainFile.Logger.Info($"    CardPileCmd.Add result: success={addResult.success}, cardAdded={addResult.cardAdded?.Id.Entry}, oldPile={addResult.oldPile?.Type}");
-                MainFile.Logger.Info($"    After Add: Pile={clone.Pile?.Type}, B DeckCount={playerB.Deck.Cards.Count}");
+                MainFile.LogVerbose($"    CardPileCmd.Add result: success={addResult.success}, cardAdded={addResult.cardAdded?.Id.Entry}, oldPile={addResult.oldPile?.Type}");
+                MainFile.LogVerbose($"    After Add: Pile={clone.Pile?.Type}, B DeckCount={playerB.Deck.Cards.Count}");
             }
             // NTopBarDeckButton listens to CardAddFinished (not CardAdded).
             // CardPileCmd.Add only fires CardAdded via AddInternal — CardAddFinished
@@ -845,15 +862,15 @@ public class TradeSynchronizer : IDisposable
             // B's cards go to A
             foreach (var clone in bCardClones)
             {
-                MainFile.Logger.Info($"  Adding card {clone.Id.Entry} to A ({playerA.NetId})");
-                MainFile.Logger.Info($"    Before: Owner={clone.Owner?.NetId}, HasBeenRemovedFromState={clone.HasBeenRemovedFromState}, Pile={clone.Pile?.Type}");
+                MainFile.LogVerbose($"  Adding card {clone.Id.Entry} to A ({playerA.NetId})");
+                MainFile.LogVerbose($"    Before: Owner={clone.Owner?.NetId}, HasBeenRemovedFromState={clone.HasBeenRemovedFromState}, Pile={clone.Pile?.Type}");
                 clone.Owner = null;
                 runStateA.AddCard(clone, playerA);
                 var inRunState = runStateA.ContainsCard(clone);
-                MainFile.Logger.Info($"    After AddCard: Owner={clone.Owner?.NetId}, InRunState={inRunState}, Pile={clone.Pile?.Type}");
+                MainFile.LogVerbose($"    After AddCard: Owner={clone.Owner?.NetId}, InRunState={inRunState}, Pile={clone.Pile?.Type}");
                 var addResult = await CardPileCmd.Add(clone, PileType.Deck, skipVisuals: false);
-                MainFile.Logger.Info($"    CardPileCmd.Add result: success={addResult.success}, cardAdded={addResult.cardAdded?.Id.Entry}, oldPile={addResult.oldPile?.Type}");
-                MainFile.Logger.Info($"    After Add: Pile={clone.Pile?.Type}, A DeckCount={playerA.Deck.Cards.Count}");
+                MainFile.LogVerbose($"    CardPileCmd.Add result: success={addResult.success}, cardAdded={addResult.cardAdded?.Id.Entry}, oldPile={addResult.oldPile?.Type}");
+                MainFile.LogVerbose($"    After Add: Pile={clone.Pile?.Type}, A DeckCount={playerA.Deck.Cards.Count}");
             }
             playerA.Deck.InvokeCardAddFinished();
 
@@ -880,7 +897,7 @@ public class TradeSynchronizer : IDisposable
             var secondRelicSerializables = canonSwap ? aRelicSerializables : bRelicSerializables;
             var secondRelicTarget = canonSwap ? playerB : playerA;
 
-            MainFile.Logger.Info($"  Canonical relic order: first={firstRelicTarget.NetId}'s incoming relics, second={secondRelicTarget.NetId}'s incoming relics (swap={canonSwap})");
+            MainFile.LogVerbose($"  Canonical relic order: first={firstRelicTarget.NetId}'s incoming relics, second={secondRelicTarget.NetId}'s incoming relics (swap={canonSwap})");
 
             // Pre-expand potion slots for any incoming PotionBelt
             int preExpandFirst = 0, preExpandSecond = 0;
@@ -892,7 +909,7 @@ public class TradeSynchronizer : IDisposable
                     if (temp != null)
                     {
                         int slots = temp.DynamicVars["PotionSlots"].IntValue;
-                        MainFile.Logger.Info($"  Pre-expanding {firstRelicTarget.NetId} max potion count by {slots} for incoming PotionBelt");
+                        MainFile.LogVerbose($"  Pre-expanding {firstRelicTarget.NetId} max potion count by {slots} for incoming PotionBelt");
                         await PlayerCmd.GainMaxPotionCount(slots, firstRelicTarget);
                         preExpandFirst += slots;
                     }
@@ -906,7 +923,7 @@ public class TradeSynchronizer : IDisposable
                     if (temp != null)
                     {
                         int slots = temp.DynamicVars["PotionSlots"].IntValue;
-                        MainFile.Logger.Info($"  Pre-expanding {secondRelicTarget.NetId} max potion count by {slots} for incoming PotionBelt");
+                        MainFile.LogVerbose($"  Pre-expanding {secondRelicTarget.NetId} max potion count by {slots} for incoming PotionBelt");
                         await PlayerCmd.GainMaxPotionCount(slots, secondRelicTarget);
                         preExpandSecond += slots;
                     }
@@ -916,18 +933,18 @@ public class TradeSynchronizer : IDisposable
             // A's potions go to B
             foreach (var potionId in aPotionIds)
             {
-                MainFile.Logger.Info($"  Adding potion {potionId.Entry} to B ({playerB.NetId})");
+                MainFile.LogVerbose($"  Adding potion {potionId.Entry} to B ({playerB.NetId})");
                 var fresh = ModelDb.GetById<PotionModel>(potionId).ToMutable();
                 var result = await PotionCmd.TryToProcure(fresh, playerB);
-                MainFile.Logger.Info($"    PotionCmd.TryToProcure result: success={result.success}, failureReason={result.failureReason}");
+                MainFile.LogVerbose($"    PotionCmd.TryToProcure result: success={result.success}, failureReason={result.failureReason}");
             }
             // B's potions go to A
             foreach (var potionId in bPotionIds)
             {
-                MainFile.Logger.Info($"  Adding potion {potionId.Entry} to A ({playerA.NetId})");
+                MainFile.LogVerbose($"  Adding potion {potionId.Entry} to A ({playerA.NetId})");
                 var fresh = ModelDb.GetById<PotionModel>(potionId).ToMutable();
                 var result = await PotionCmd.TryToProcure(fresh, playerA);
-                MainFile.Logger.Info($"    PotionCmd.TryToProcure result: success={result.success}, failureReason={result.failureReason}");
+                MainFile.LogVerbose($"    PotionCmd.TryToProcure result: success={result.success}, failureReason={result.failureReason}");
             }
 
             // Relics are deferred — RelicCmd.Obtain fires AfterObtained hooks
@@ -945,7 +962,7 @@ public class TradeSynchronizer : IDisposable
             LogPlayerState("AFTER TRADE", playerA);
             LogPlayerState("AFTER TRADE", playerB);
 
-            MainFile.Logger.Info($"=== TRADE EXECUTION COMPLETE (pending {pendingRelicObtains.Count} relic obtains) ===");
+            MainFile.LogVerbose($"=== TRADE EXECUTION COMPLETE (pending {pendingRelicObtains.Count} relic obtains) ===");
             return pendingRelicObtains;
         }
         catch (Exception e)

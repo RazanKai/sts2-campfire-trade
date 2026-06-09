@@ -40,11 +40,14 @@ public static class TradeValidator
             return false;
         if (c.Rarity == CardRarity.Basic && !TradeConfig.AllowStarterCards)
             return false;
-        if (c.Type is CardType.Curse or CardType.Status or CardType.Quest)
+        if (c.Type is CardType.Curse or CardType.Status)
+            return false;
+        // Quest cards are gated by config. Previously Quest was ALSO excluded
+        // unconditionally on the line above, which made BlockQuestCards dead code;
+        // the toggle now actually controls Quest tradeability (default: blocked).
+        if (TradeConfig.BlockQuestCards && c.Type == CardType.Quest)
             return false;
         if (!c.IsRemovable)
-            return false;
-        if (TradeConfig.BlockQuestCards && c.Type == CardType.Quest)
             return false;
         return true;
     }

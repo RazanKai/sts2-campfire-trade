@@ -49,6 +49,14 @@ public class TradeConfig : SimpleModConfig
     /// </summary>
     public static bool GiftedGoldTriggersGainEffects { get; set; } = true;
 
+    /// <summary>
+    /// Local-only (NOT synced over the network): when true, emit detailed per-phase
+    /// trade/sync logs to godot.log. Off by default so normal runs stay quiet and the
+    /// game's LOCAL-vs-REMOTE desync state-diff dumps aren't buried under trade chatter.
+    /// Errors always log regardless of this setting.
+    /// </summary>
+    public static bool VerboseLogging { get; set; } = false;
+
     public TradeConfig() { }
 
     public override void SetupConfigUI(Control optionContainer)
