@@ -58,28 +58,6 @@ dotnet publish     # additionally exports the .pck asset pack via MegaDot
 
 The `.csproj` auto-detects the Steam install per-OS, publicizes `sts2.dll`, and references BaseLib. NuGet packages restore into a local `packages/` cache (gitignored).
 
-## Project layout
-
-```
-MainFile.cs              Mod entry point ([ModInitializer])
-TradeConfig.cs           BaseLib config (slot caps, toggles)
-TradeValidator.cs        Card point-balance rules
-TradeSynchronizer.cs     Co-op state machine + trade execution
-TradeRestSiteOption.cs   The "Trade with Player" rest-site option
-TradeState.cs            Trade session state
-GoldGiftSynchronizer.cs  Co-op gold-transfer logic for the shop feature
-Messages/                Index-based INetMessage structs (offer/target/confirm/cancel/config/give-gold)
-Patches/                 Harmony patches (option injection, sync lifecycle, shop gold buttons)
-UI/                      Custom trade screen, slots, picker, tooltip, notification, Give Gold button
-CampfireTrade/           Localization + mod image (packed into the .pck)
-images/                  Rest-site option icon
-docs/                    Design doc, API audit, prior-art comparison
-```
-
-## Documentation
-
-- [`docs/campfire-trade-mod-design.md`](docs/campfire-trade-mod-design.md) — full design spec (kept current)
-
 ## Credits
 
 This mod is **based on [chaendizzle/STS2Trade](https://github.com/chaendizzle/STS2Trade)** ("Campfire Trading", on [Nexus Mods](https://www.nexusmods.com/slaythespire2/mods/107)). The networking, synchronizer, rest-site option, trade UI, and the Give Gold shop feature are taken largely from that mod. The changes on top are: a rarity **point-balance system for cards** (`TradeValidator.cs`, with an on/off toggle); making trade **consume the campfire action** (deferring to the game's native Miniature Tent handling); a fix for a co-op **choice-ID desync** on duplicate selections; an asset-import build step so the trade **icon resolves**; and config toggles for **starter cards** and **gold gifting**. The newer-build port [sirposh777/campfire-trading-update](https://github.com/sirposh777/campfire-trading-update) was also referenced.
